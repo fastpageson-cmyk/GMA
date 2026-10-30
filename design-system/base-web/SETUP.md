@@ -61,7 +61,7 @@ ls node_modules/baseui/button | head -3
 
 ## Figma
 
-팀 공유 파일(링크만 열면 됨): [열기](https://www.figma.com/design/09cjcozFxN8qeM9ifoZXBf/Base-Gallery--Community-)
+팀 공유 파일(링크만 열면 됨): [열기](https://www.figma.com/design/0R2a5OdoblLjo5gbap5XZf/Base-Gallery--Community-)
 
 원본 Uber 공식 키트: [Base Gallery](https://www.figma.com/community/file/805195278314519508)
 

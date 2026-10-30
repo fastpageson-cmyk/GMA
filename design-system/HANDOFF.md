@@ -37,7 +37,7 @@ Claude가 레포 받기, 설치, 확인, 비교 페이지 열기까지 알아서
 | | Figma 파일 (팀 공유) | 공식 문서 | 컴포넌트 미리보기 |
 |---|---|---|---|
 | Material 3 | [Material 3 Design Kit](https://www.figma.com/design/vtsIW24M4Kt6p68FtjLu88/Material-3-Design-Kit--Community-) | https://m3.material.io | https://material-web.dev |
-| Uber Base | [Base Gallery](https://www.figma.com/design/09cjcozFxN8qeM9ifoZXBf/Base-Gallery--Community-) | https://baseweb.design | https://baseweb.design/components/ |
+| Uber Base | [Base Gallery](https://www.figma.com/design/0R2a5OdoblLjo5gbap5XZf/Base-Gallery--Community-) | https://baseweb.design | https://baseweb.design/components/ |
 | GitLab Pajamas | [Pajamas Component library](https://www.figma.com/design/P2m2ca70FaXbA8Mq5rT3KG/Component-library--Community-) | https://design.gitlab.com | https://gitlab-org.gitlab.io/gitlab-ui/ |
 | Microsoft Fluent 2 | [Fluent 2 Web](https://www.figma.com/design/z93KF8UjOdylHlqZKcdng3/Microsoft-Fluent-2-Web--Community-) | https://fluent2.microsoft.design | https://react.fluentui.dev |
 

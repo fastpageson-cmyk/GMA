@@ -18,7 +18,7 @@ GMA 프론트엔드를 하나의 디자인 시스템으로 통일하기 위한 �
 | 디자인 토큰 | `@material/web/tokens` (Sass) | `baseui/themes`, `baseui/tokens` (JS) | `tokens.css`, `tokens.dark.css` (CSS 변수) | `webLightTheme`, `webDarkTheme` (JS) |
 | 라이선스 | Apache-2.0 / 폰트 OFL-1.1 | MIT | MIT / 폰트 OFL-1.1 | MIT |
 | 공식 문서 | https://m3.material.io | https://baseweb.design | https://design.gitlab.com | https://fluent2.microsoft.design |
-| Figma (팀 공유) | [Material 3 Design Kit](https://www.figma.com/design/vtsIW24M4Kt6p68FtjLu88/Material-3-Design-Kit--Community-) | [Base Gallery](https://www.figma.com/design/09cjcozFxN8qeM9ifoZXBf/Base-Gallery--Community-) | [Pajamas Component library](https://www.figma.com/design/P2m2ca70FaXbA8Mq5rT3KG/Component-library--Community-) | [Fluent 2 Web](https://www.figma.com/design/z93KF8UjOdylHlqZKcdng3/Microsoft-Fluent-2-Web--Community-) |
+| Figma (팀 공유) | [Material 3 Design Kit](https://www.figma.com/design/vtsIW24M4Kt6p68FtjLu88/Material-3-Design-Kit--Community-) | [Base Gallery](https://www.figma.com/design/0R2a5OdoblLjo5gbap5XZf/Base-Gallery--Community-) | [Pajamas Component library](https://www.figma.com/design/P2m2ca70FaXbA8Mq5rT3KG/Component-library--Community-) | [Fluent 2 Web](https://www.figma.com/design/z93KF8UjOdylHlqZKcdng3/Microsoft-Fluent-2-Web--Community-) |
 
 ## 고를 때 볼 점
 
