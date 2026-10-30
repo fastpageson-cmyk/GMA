@@ -14,6 +14,7 @@ cp .env.example .env   # 필요 시 환경 변수 채우기
 
 ```
 .
+├── design-system/  # 디자인 시스템 후보 3종 (design-system/README.md 참고)
 ├── docs/      # 문서
 ├── src/       # 소스 코드
 └── tests/     # 테스트
