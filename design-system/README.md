@@ -32,6 +32,7 @@ design-system/
 ├── README.md        # 이 문서
 ├── HANDOFF.md       # 시작 가이드: 필요한 프로그램, 3단계 진행 순서
 ├── setup.mjs        # 세 시스템 설치 + 확인 스크립트
+├── compare.html     # 세 시스템 색·글자·모서리·그림자·버튼 비교 페이지
 ├── material/        # package.json, package-lock.json, SETUP.md, figma/
 ├── base-web/        # package.json, package-lock.json, SETUP.md, figma/
 └── pajamas/         # package.json, package-lock.json, SETUP.md, figma/

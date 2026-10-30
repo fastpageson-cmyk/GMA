@@ -9,7 +9,7 @@
 |---|---|
 | `tokens.json` | 색(Light/Dark), 상태 레이어 투명도, 글자 스타일 15종, 모서리 둥글기, 그림자 5단계 |
 | `cover.png` | 키트 표지 |
-| `buttons.png` | 기본 버튼 모음 |
+| `buttons.png` | Filled 버튼(크기 5종 × 상태) |
 
 ## 키트 구성
 

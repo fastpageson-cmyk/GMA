@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>디자인 시스템 비교</title>
+<style>
+/* 각 시스템의 실제 폰트. design-system 설치(setup.mjs) 후에 보입니다. */
+@font-face { font-family: "M3 Roboto"; font-weight: 400; src: url("material/node_modules/@fontsource/roboto/files/roboto-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "M3 Roboto"; font-weight: 500; src: url("material/node_modules/@fontsource/roboto/files/roboto-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "GL Sans"; font-weight: 100 900; src: url("pajamas/node_modules/@gitlab/fonts/gitlab-sans/GitLabSans.woff2") format("woff2"); }
+@font-face { font-family: "GL Mono"; font-weight: 100 900; src: url("pajamas/node_modules/@gitlab/fonts/gitlab-mono/GitLabMono.woff2") format("woff2"); }
+
+:root {
+  --paper: #f6f5f2;
+  --sheet: #ffffff;
+  --ink: #1b1a19;
+  --ink-2: #5a5753;
+  --rule: #e3e0db;
+  --rule-strong: #cfcac2;
+  --focus: #1b1a19;
+  --font-ui: system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-data: "GL Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --f-m3: "M3 Roboto", system-ui, sans-serif;
+  --f-base: system-ui, -apple-system, sans-serif;
+  --f-gl: "GL Sans", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font: 15px/1.55 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+::selection { background: #1b1a19; color: #f6f5f2; }
+a { color: inherit; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 2px; }
+code, .hex { font-family: var(--font-data); font-size: 12px; }
+
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px 96px; }
+header.top { padding: 56px 0 32px; }
+h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 12px; font-weight: 650; text-wrap: balance; }
+.lede { max-width: 68ch; color: var(--ink-2); margin: 0; }
+.lede strong { color: var(--ink); font-weight: 600; }
+
+/* 열 머리: 스크롤해도 어떤 시스템인지 보이도록 고정 */
+.cols {
+  position: sticky; top: 0; z-index: 5;
+  display: grid; grid-template-columns: 168px repeat(3, minmax(0, 1fr)); gap: 0 24px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: saturate(1.2) blur(8px);
+  border-bottom: 1px solid var(--rule-strong);
+  padding: 14px 0;
+}
+.cols div { font-weight: 650; font-size: 17px; }
+.cols .m3 { font-family: var(--f-m3); font-weight: 500; }
+.cols .gl { font-family: var(--f-gl); font-weight: 600; }
+.cols small { display: block; font: 12px/1.4 var(--font-ui); color: var(--ink-2); font-weight: 400; }
+
+section.row {
+  display: grid; grid-template-columns: 168px repeat(3, minmax(0, 1fr)); gap: 0 24px;
+  padding: 40px 0; border-bottom: 1px solid var(--rule);
+}
+.row > h2 { font-size: 15px; font-weight: 650; margin: 2px 0 0; }
+.row > h2 span { display: block; font-weight: 400; color: var(--ink-2); font-size: 13px; margin-top: 4px; max-width: 18ch; }
+.cell { min-width: 0; }
+.cell > .sys { display: none; }
+
+/* 한눈에 */
+dl.facts { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 14px; }
+dl.facts dt { color: var(--ink-2); }
+dl.facts dd { margin: 0; }
+.warn { color: #9a3412; font-weight: 600; }
+
+/* 색 */
+.mode { font-size: 12px; color: var(--ink-2); margin: 0 0 8px; }
+.mode + .swatches { margin-bottom: 20px; }
+.swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.sw { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; }
+.sw i { width: 36px; height: 36px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .08); }
+.sw b { display: block; font-weight: 500; font-size: 13px; line-height: 1.3; }
+
+/* 글자 */
+.ramp { display: grid; gap: 14px; }
+.ramp p { margin: 0; overflow-wrap: anywhere; }
+.ramp .meta { display: block; font: 12px/1.4 var(--font-data); color: var(--ink-2); margin-bottom: 2px; }
+.f-m3 { font-family: var(--f-m3); }
+.f-base { font-family: var(--f-base); }
+.f-gl { font-family: var(--f-gl); }
+
+/* 모서리 */
+.radii { display: flex; flex-wrap: wrap; gap: 10px; }
+.radii figure { margin: 0; text-align: center; font-size: 12px; color: var(--ink-2); }
+.radii div { width: 52px; height: 52px; background: var(--ink); margin-bottom: 6px; }
+
+/* 그림자 */
+.shadows { display: grid; gap: 18px; }
+.shadows figure { margin: 0; background: var(--sheet); border-radius: 10px; padding: 14px 16px; font-size: 13px; }
+.shadows figcaption { color: var(--ink-2); font-size: 12px; }
+
+/* 버튼 스크린샷 */
+.shot { display: block; background: var(--sheet); border: 1px solid var(--rule); border-radius: 8px; padding: 8px; }
+.shot img { display: block; width: 100%; height: auto; max-height: 520px; object-fit: contain; object-position: top; }
+.cap { font-size: 12px; color: var(--ink-2); margin-top: 8px; }
+
+.note { margin-top: 40px; font-size: 13px; color: var(--ink-2); max-width: 75ch; }
+
+@media (max-width: 900px) {
+  .cols { display: none; }
+  section.row { grid-template-columns: 1fr; gap: 24px; }
+  .cell > .sys { display: block; font-weight: 650; margin-bottom: 10px; font-size: 14px; }
+}
+@media (max-width: 480px) {
+  .wrap { padding: 0 16px 64px; }
+  .swatches { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>디자인 시스템 후보 3종 비교</h1>
+  <p class="lede">색, 글자, 모서리, 그림자, 버튼을 같은 줄에 놓았습니다. 값은 각 시스템의 <strong>코드(npm) 토큰</strong>을 기준으로 하고, Figma 키트와 다른 곳은 따로 표시했습니다. 폰트는 <code>node design-system/setup.mjs</code>로 설치한 실제 파일을 씁니다.</p>
+</header>
+
+<div class="cols" aria-hidden="true">
+  <span></span>
+  <div class="m3">Material 3<small>Google</small></div>
+  <div class="base">Base Web<small>Uber</small></div>
+  <div class="gl">Pajamas<small>GitLab</small></div>
+</div>
+
+<!-- 한눈에 -->
+<section class="row">
+  <h2>한눈에<span>고르기 전에 먼저 볼 조건</span></h2>
+  <div class="cell"><div class="sys">Material 3</div>
+    <dl class="facts">
+      <dt>코드</dt><dd>Web Components, 프레임워크 무관</dd>
+      <dt>폰트</dt><dd>Roboto (받을 수 있음)</dd>
+      <dt>라이선스</dt><dd>Apache-2.0</dd>
+      <dt>Figma</dt><dd><a href="https://www.figma.com/community/file/1035203688168086460">Material 3 Design Kit</a>, 변수 304개</dd>
+      <dt>문서</dt><dd><a href="https://m3.material.io">m3.material.io</a></dd>
+    </dl>
+  </div>
+  <div class="cell"><div class="sys">Base Web</div>
+    <dl class="facts">
+      <dt>코드</dt><dd>React 18 전용</dd>
+      <dt>폰트</dt><dd class="warn">Uber Move (비공개, 받을 수 없음)</dd>
+      <dt>라이선스</dt><dd>MIT</dd>
+      <dt>Figma</dt><dd><a href="https://www.figma.com/community/file/805195278314519508">Base Gallery</a>, <span class="warn">색이 코드보다 옛 버전</span></dd>
+      <dt>문서</dt><dd><a href="https://baseweb.design">baseweb.design</a></dd>
+    </dl>
+  </div>
+  <div class="cell"><div class="sys">Pajamas</div>
+    <dl class="facts">
+      <dt>코드</dt><dd>Vue 2.7 전용</dd>
+      <dt>폰트</dt><dd>GitLab Sans, GitLab Mono (받을 수 있음)</dd>
+      <dt>라이선스</dt><dd>MIT</dd>
+      <dt>Figma</dt><dd><a href="https://www.figma.com/community/file/781156790581391771">Component library</a>, <span class="warn">색 변수 없음</span></dd>
+      <dt>문서</dt><dd><a href="https://design.gitlab.com">design.gitlab.com</a></dd>
+    </dl>
+  </div>
+</section>
+
+<!-- 색 -->
+<section class="row">
+  <h2>색<span>같은 역할끼리 맞춰 놓음</span></h2>
+  <div class="cell"><div class="sys">Material 3</div>
+    <p class="mode">라이트</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#6750a4"></i><span><b>주 색</b><span class="hex">#6750A4</span></span></div>
+      <div class="sw"><i style="background:#625b71"></i><span><b>보조</b><span class="hex">#625B71</span></span></div>
+      <div class="sw"><i style="background:#b3261e"></i><span><b>오류</b><span class="hex">#B3261E</span></span></div>
+      <div class="sw"><i style="background:#fef7ff"></i><span><b>배경</b><span class="hex">#FEF7FF</span></span></div>
+      <div class="sw"><i style="background:#1d1b20"></i><span><b>본문 글자</b><span class="hex">#1D1B20</span></span></div>
+      <div class="sw"><i style="background:#79747e"></i><span><b>테두리</b><span class="hex">#79747E</span></span></div>
+    </div>
+    <p class="mode">다크</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#d0bcff"></i><span><b>주 색</b><span class="hex">#D0BCFF</span></span></div>
+      <div class="sw"><i style="background:#ccc2dc"></i><span><b>보조</b><span class="hex">#CCC2DC</span></span></div>
+      <div class="sw"><i style="background:#f2b8b5"></i><span><b>오류</b><span class="hex">#F2B8B5</span></span></div>
+      <div class="sw"><i style="background:#141218"></i><span><b>배경</b><span class="hex">#141218</span></span></div>
+      <div class="sw"><i style="background:#e6e0e9"></i><span><b>본문 글자</b><span class="hex">#E6E0E9</span></span></div>
+      <div class="sw"><i style="background:#938f99"></i><span><b>테두리</b><span class="hex">#938F99</span></span></div>
+    </div>
+  </div>
+  <div class="cell"><div class="sys">Base Web</div>
+    <p class="mode">라이트</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#000000"></i><span><b>주 색</b><span class="hex">#000000</span></span></div>
+      <div class="sw"><i style="background:#276ef1"></i><span><b>강조</b><span class="hex">#276EF1</span></span></div>
+      <div class="sw"><i style="background:#de1135"></i><span><b>오류</b><span class="hex">#DE1135</span></span></div>
+      <div class="sw"><i style="background:#ffffff"></i><span><b>배경</b><span class="hex">#FFFFFF</span></span></div>
+      <div class="sw"><i style="background:#000000"></i><span><b>본문 글자</b><span class="hex">#000000</span></span></div>
+      <div class="sw"><i style="background:#f3f3f3"></i><span><b>테두리</b><span class="hex">#F3F3F3</span></span></div>
+    </div>
+    <p class="mode">다크</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#ffffff"></i><span><b>주 색</b><span class="hex">#FFFFFF</span></span></div>
+      <div class="sw"><i style="background:#335ba3"></i><span><b>강조</b><span class="hex">#335BA3</span></span></div>
+      <div class="sw"><i style="background:#a32c34"></i><span><b>오류</b><span class="hex">#A32C34</span></span></div>
+      <div class="sw"><i style="background:#161616"></i><span><b>배경</b><span class="hex">#161616</span></span></div>
+      <div class="sw"><i style="background:#dedede"></i><span><b>본문 글자</b><span class="hex">#DEDEDE</span></span></div>
+      <div class="sw"><i style="background:#292929"></i><span><b>테두리</b><span class="hex">#292929</span></span></div>
+    </div>
+  </div>
+  <div class="cell"><div class="sys">Pajamas</div>
+    <p class="mode">라이트</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#1f73ca"></i><span><b>주 색</b><span class="hex">#1F73CA</span></span></div>
+      <div class="sw"><i style="background:#3a383d"></i><span><b>보조</b><span class="hex">#3A383D</span></span></div>
+      <div class="sw"><i style="background:#de1d4b"></i><span><b>오류</b><span class="hex">#DE1D4B</span></span></div>
+      <div class="sw"><i style="background:#ffffff"></i><span><b>배경</b><span class="hex">#FFFFFF</span></span></div>
+      <div class="sw"><i style="background:#3a383d"></i><span><b>본문 글자</b><span class="hex">#3A383D</span></span></div>
+      <div class="sw"><i style="background:#dcdbd9"></i><span><b>테두리</b><span class="hex">#DCDBD9</span></span></div>
+    </div>
+    <p class="mode">다크 (주 색·오류는 팔레트 400 단계로 근사)</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#3f8edd"></i><span><b>주 색</b><span class="hex">#3F8EDD</span></span></div>
+      <div class="sw"><i style="background:#c1bfbe"></i><span><b>보조</b><span class="hex">#C1BFBE</span></span></div>
+      <div class="sw"><i style="background:#f15168"></i><span><b>오류</b><span class="hex">#F15168</span></span></div>
+      <div class="sw"><i style="background:#18171d"></i><span><b>배경</b><span class="hex">#18171D</span></span></div>
+      <div class="sw"><i style="background:#ecebea"></i><span><b>본문 글자</b><span class="hex">#ECEBEA</span></span></div>
+      <div class="sw"><i style="background:#4d4b4e"></i><span><b>테두리</b><span class="hex">#4D4B4E</span></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 글자 -->
+<section class="row">
+  <h2>글자<span>각 시스템 폰트로 그림. 한글은 세 폰트 모두 지원하지 않아 운영체제 폰트로 보임</span></h2>
+  <div class="cell f-m3"><div class="sys">Material 3</div>
+    <div class="ramp">
+      <p style="font-size:45px;line-height:52px"><span class="meta">Display M · 45/52</span>Aa 123</p>
+      <p style="font-size:32px;line-height:40px"><span class="meta">Headline L · 32/40</span>Design system</p>
+      <p style="font-size:22px;line-height:28px"><span class="meta">Title L · 22/28</span>Pick one system</p>
+      <p style="font-size:14px;line-height:20px;font-weight:500;letter-spacing:.1px"><span class="meta">Label L · 14/20 · 500</span>Button label</p>
+      <p style="font-size:16px;line-height:24px;letter-spacing:.5px"><span class="meta">Body L · 16/24</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
+      <p style="font-size:14px;line-height:20px;letter-spacing:.25px"><span class="meta">Body M · 14/20</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
+    </div>
+  </div>
+  <div class="cell f-base"><div class="sys">Base Web</div>
+    <div class="ramp">
+      <p style="font-size:44px;line-height:52px;font-weight:500"><span class="meta">Display S · 44/52</span>Aa 123</p>
+      <p style="font-size:32px;line-height:40px;font-weight:500"><span class="meta">Heading L · 32/40</span>Design system</p>
+      <p style="font-size:20px;line-height:28px;font-weight:500"><span class="meta">Heading XS · 20/28</span>Pick one system</p>
+      <p style="font-size:14px;line-height:16px;font-weight:500"><span class="meta">Label S · 14/16 · 500</span>Button label</p>
+      <p style="font-size:16px;line-height:24px"><span class="meta">Paragraph M · 16/24</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
+      <p style="font-size:14px;line-height:20px"><span class="meta">Paragraph S · 14/20</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
+    </div>
+  </div>
+  <div class="cell f-gl"><div class="sys">Pajamas</div>
+    <div class="ramp">
+      <p style="font-size:36px;line-height:1.125;font-weight:600;letter-spacing:-.01em"><span class="meta">Display · 28–36 · 600</span>Aa 123</p>
+      <p style="font-size:30px;line-height:1.25;font-weight:600;letter-spacing:-.01em"><span class="meta">h1 · 24–30 · 600</span>Design system</p>
+      <p style="font-size:20px;line-height:1.25;font-weight:600;letter-spacing:-.01em"><span class="meta">h3 · 18–20 · 600</span>Pick one system</p>
+      <p style="font-size:14px;line-height:16px"><span class="meta">Label · 14/16</span>Button label</p>
+      <p style="font-size:16px;line-height:24px"><span class="meta">Paragraph lg · 16/24</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
+      <p style="font-size:14px;line-height:20px"><span class="meta">Paragraph · 14/20</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 모서리 -->
+<section class="row">
+  <h2>모서리<span>둥글기 단계</span></h2>
+  <div class="cell"><div class="sys">Material 3</div>
+    <div class="radii">
+      <figure><div style="border-radius:4px"></div>4</figure>
+      <figure><div style="border-radius:8px"></div>8</figure>
+      <figure><div style="border-radius:12px"></div>12</figure>
+      <figure><div style="border-radius:16px"></div>16</figure>
+      <figure><div style="border-radius:28px"></div>28</figure>
+      <figure><div style="border-radius:999px"></div>full</figure>
+    </div>
+    <p class="cap">버튼은 기본이 완전히 둥근 알약 모양입니다.</p>
+  </div>
+  <div class="cell"><div class="sys">Base Web</div>
+    <div class="radii">
+      <figure><div style="border-radius:2px"></div>2</figure>
+      <figure><div style="border-radius:4px"></div>4</figure>
+      <figure><div style="border-radius:8px"></div>8</figure>
+      <figure><div style="border-radius:12px"></div>12</figure>
+      <figure><div style="border-radius:16px"></div>16</figure>
+    </div>
+    <p class="cap">버튼은 기본이 각진 사각형이고, 알약 모양도 있습니다.</p>
+  </div>
+  <div class="cell"><div class="sys">Pajamas</div>
+    <div class="radii">
+      <figure><div style="border-radius:2px"></div>2</figure>
+      <figure><div style="border-radius:4px"></div>4</figure>
+      <figure><div style="border-radius:8px"></div>8</figure>
+      <figure><div style="border-radius:12px"></div>12</figure>
+      <figure><div style="border-radius:999px"></div>full</figure>
+    </div>
+    <p class="cap">작은 반경을 주로 써서 촘촘한 화면에 맞습니다.</p>
+  </div>
+</section>
+
+<!-- 그림자 -->
+<section class="row">
+  <h2>그림자<span>떠 있는 정도</span></h2>
+  <div class="cell"><div class="sys">Material 3</div>
+    <div class="shadows">
+      <figure style="box-shadow:0 1px 3px 1px #00000026,0 1px 2px 0 #0000004d">Level 1<figcaption>카드, 버튼</figcaption></figure>
+      <figure style="box-shadow:0 2px 3px 0 #0000004d,0 6px 10px 4px #00000026">Level 4<figcaption>메뉴</figcaption></figure>
+      <figure style="box-shadow:0 4px 4px 0 #0000004d,0 8px 12px 6px #00000026">Level 5<figcaption>가장 높음</figcaption></figure>
+    </div>
+  </div>
+  <div class="cell"><div class="sys">Base Web</div>
+    <div class="shadows">
+      <figure style="box-shadow:0 1px 4px hsla(0,0%,0%,.16)">shadow400<figcaption>카드</figcaption></figure>
+      <figure style="box-shadow:0 4px 16px hsla(0,0%,0%,.16)">shadow600<figcaption>팝오버</figcaption></figure>
+      <figure style="box-shadow:0 16px 48px 0 #00000038">Below / High<figcaption>Figma 기준, 모달</figcaption></figure>
+    </div>
+  </div>
+  <div class="cell"><div class="sys">Pajamas</div>
+    <div class="shadows">
+      <figure style="box-shadow:0 1px 4px 0 #05050629,0 0 2px 0 #05050629">shadow-sm<figcaption>드롭다운</figcaption></figure>
+      <figure style="box-shadow:0 2px 8px 0 #05050629,0 0 2px 0 #05050629,0 0 1px 0 #05050629">shadow-md<figcaption>팝오버</figcaption></figure>
+      <figure style="box-shadow:0 4px 12px 0 #05050629,0 0 2px 0 #05050629,0 0 2px 0 #05050629">shadow-lg<figcaption>모달</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- 버튼 -->
+<section class="row">
+  <h2>버튼<span>Figma 키트 스크린샷</span></h2>
+  <div class="cell"><div class="sys">Material 3</div>
+    <a class="shot" href="material/figma/buttons.png"><img src="material/figma/buttons.png" alt="Material 3 Filled 버튼: 크기 5종, 상태별"></a>
+  </div>
+  <div class="cell"><div class="sys">Base Web</div>
+    <a class="shot" href="base-web/figma/buttons.png"><img src="base-web/figma/buttons.png" alt="Base 버튼 모음: 크기 4종, 사각·알약·원형"></a>
+    <p class="cap">원본이 커서 작게 보입니다. 누르면 크게 열립니다.</p>
+  </div>
+  <div class="cell"><div class="sys">Pajamas</div>
+    <a class="shot" href="pajamas/figma/buttons.png"><img src="pajamas/figma/buttons.png" alt="Pajamas 버튼 스티커 시트"></a>
+  </div>
+</section>
+
+<p class="note">더 자세한 값은 각 폴더의 <code>figma/tokens.json</code>과 <code>figma/README.md</code>에 있습니다. Pajamas 다크 모드의 주 색과 오류 색은 코드 팔레트 400 단계로 근사한 값입니다.</p>
+
+</div>
+</body>
+</html>

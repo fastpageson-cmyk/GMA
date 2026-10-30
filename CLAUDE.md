@@ -54,6 +54,13 @@ GMA 저장소 작업 가이드입니다.
 4. 해당 시스템의 `design-system/<시스템>/figma/`에 기존 형식(`tokens.json`, `README.md`, PNG)대로 저장하고, 기존 값과 달라진 점을 알려 줍니다.
 5. 커밋과 push는 사용자가 요청할 때만 합니다.
 
+### "비교 페이지 열어 줘", "세 개 비교해서 보여 줘"
+
+1. 설치가 안 되어 있으면(`design-system/material/node_modules`가 없으면) 먼저 "설치" 절차를 진행합니다. 폰트가 설치된 파일에서 불러와지기 때문입니다.
+2. `design-system` 폴더를 정적 서버로 띄웁니다. macOS는 `python3 -m http.server 8765 --directory design-system`, 그 밖에는 `npx --yes http-server design-system -p 8765`를 씁니다. 파일을 직접(`file://`) 열면 폰트가 안 보일 수 있습니다.
+3. 브라우저(앱의 브라우저 창이 있으면 그것)로 `http://localhost:8765/compare.html`을 엽니다.
+4. 페이지에서 볼 점을 세 줄로 요약해 줍니다: Base는 폰트를 받을 수 없음, Base Figma 색이 코드보다 옛 버전, 세 폰트 모두 한글을 지원하지 않아 한글 폰트를 따로 정해야 함.
+
 ### 자주 나는 오류
 
 | 오류 | 원인 | 처리 |
