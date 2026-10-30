@@ -32,7 +32,9 @@ design-system/
 ├── README.md        # 이 문서
 ├── HANDOFF.md       # 시작 가이드: 필요한 프로그램, 3단계 진행 순서
 ├── setup.mjs        # 세 시스템 설치 + 확인 스크립트
-├── material/        # package.json, package-lock.json, SETUP.md
-├── base-web/        # package.json, package-lock.json, SETUP.md
-└── pajamas/         # package.json, package-lock.json, SETUP.md
+├── material/        # package.json, package-lock.json, SETUP.md, figma/
+├── base-web/        # package.json, package-lock.json, SETUP.md, figma/
+└── pajamas/         # package.json, package-lock.json, SETUP.md, figma/
 ```
+
+각 `figma/` 폴더에는 Figma 키트에서 뽑은 색·글자·그림자 값(`tokens.json`), 설명(`README.md`), 표지와 버튼 스크린샷이 있습니다.

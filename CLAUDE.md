@@ -40,6 +40,20 @@ GMA 저장소 작업 가이드입니다.
    - 실패: 오류 원문 한 줄, 원인, 해결 방법을 알려 주고, Claude가 고칠 수 있으면 고친 뒤 3번을 다시 실행합니다.
 5. `package.json`, `package-lock.json`은 사용자가 요청하지 않으면 수정하지 않습니다.
 
+### "Figma 받고 싶어", "피그마 키트 어떻게 받아?", "Figma에서 보고 싶어"
+
+1. 먼저 Figma에서 가져온 값이 이미 레포에 있다고 알려 줍니다: `design-system/material/figma/`, `design-system/base-web/figma/`, `design-system/pajamas/figma/` (각 폴더의 `README.md`, `tokens.json`, 스크린샷).
+2. Figma에서 직접 만져 보고 싶다면, HANDOFF.md "2-1단계"대로 안내합니다. 링크 3개와 "Open in Figma"(한국어 화면은 "Figma에서 열기") 버튼을 누르면 Drafts에 복사본이 생긴다는 것까지 알려 줍니다. Figma 계정이 없으면 https://www.figma.com/signup 을 먼저 안내합니다.
+3. 커뮤니티 파일은 Figma 커넥터로 바로 읽을 수 없습니다. 반드시 사람이 복사본을 만들고 그 URL을 붙여 넣어야 한다고 설명합니다.
+
+### 사용자가 Figma 파일 URL을 붙여 넣고 토큰을 뽑아 달라고 하면
+
+1. Figma 커넥터(Figma MCP)가 연결되어 있는지 확인합니다. 없으면 "Claude 앱 설정의 커넥터(Connectors)에서 Figma를 연결해 주세요"라고 안내하고 멈춥니다.
+2. URL에서 파일 키를 뽑고, 읽기 전용으로만 작업합니다. Figma 파일은 절대 수정하지 않습니다.
+3. 로컬 변수(색은 Light/Dark 모드), 글자 스타일, 그림자 스타일, 페이지(컴포넌트) 목록, 대표 화면 스크린샷을 가져옵니다.
+4. 해당 시스템의 `design-system/<시스템>/figma/`에 기존 형식(`tokens.json`, `README.md`, PNG)대로 저장하고, 기존 값과 달라진 점을 알려 줍니다.
+5. 커밋과 push는 사용자가 요청할 때만 합니다.
+
 ### 자주 나는 오류
 
 | 오류 | 원인 | 처리 |
