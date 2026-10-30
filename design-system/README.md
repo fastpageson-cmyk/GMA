@@ -4,7 +4,7 @@ GMA 프론트엔드를 하나의 디자인 시스템으로 통일하기 위한 �
 
 라이브러리 코드와 폰트 파일은 레포에 직접 넣지 않았습니다. 각 폴더의 `package.json`과 `package-lock.json`이 받을 패키지와 버전을 고정해 두므로, 설치 스크립트를 실행하면 모두 같은 버전을 받습니다.
 
-처음 받는 분은 [HANDOFF.md](HANDOFF.md)부터 읽어 주세요. 설치는 GMA 폴더에서 `node design-system/setup.mjs` 한 줄이면 됩니다.
+처음 받는 분은 [HANDOFF.md](HANDOFF.md)부터 읽어 주세요. 설치는 Claude에게 "설치해 줘"라고 하면 됩니다.
 
 ## 후보 비교
 
@@ -30,7 +30,7 @@ GMA 프론트엔드를 하나의 디자인 시스템으로 통일하기 위한 �
 ```
 design-system/
 ├── README.md        # 이 문서
-├── HANDOFF.md       # 인수인계: 건우가 한 일, 할 일 순서, 문제 해결
+├── HANDOFF.md       # 시작 가이드: 필요한 프로그램, 3단계 진행 순서
 ├── setup.mjs        # 세 시스템 설치 + 확인 스크립트
 ├── material/        # package.json, package-lock.json, SETUP.md
 ├── base-web/        # package.json, package-lock.json, SETUP.md
