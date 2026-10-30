@@ -3,6 +3,7 @@
   "private": true,
   "description": "Google Material Design 3 — 컴포넌트·폰트·아이콘",
   "dependencies": {
+    "@fontsource-variable/google-sans": "^5.3.2",
     "@fontsource-variable/google-sans-flex": "^5.3.2",
     "@fontsource-variable/roboto-flex": "^5.3.0",
     "@fontsource/google-sans-code": "^5.3.2",

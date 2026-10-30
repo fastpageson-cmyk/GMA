@@ -58,3 +58,9 @@ ls node_modules/baseui/themes
 ls node_modules/baseui/tokens
 ls node_modules/baseui/button | head -3
 ```
+
+## Figma
+
+Uber 공식 키트: [Base Gallery](https://www.figma.com/community/file/805195278314519508)
+
+이 파일은 Uber 내부 라이브러리와 연결되어 있어서, 복사해도 Assets 패널에 컴포넌트가 바로 나오지 않을 수 있습니다. 화면과 컴포넌트를 참고하는 용도로 씁니다.

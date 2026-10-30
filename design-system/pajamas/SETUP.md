@@ -53,4 +53,6 @@ ls node_modules/@gitlab/svgs/dist/icons.svg
 
 ## Figma
 
-Figma 커뮤니티에서 "Pajamas UI Kit"를 검색하면 GitLab 공식 키트가 나옵니다. 레포에는 넣지 않습니다.
+GitLab 공식 키트: [Pajamas Component library](https://www.figma.com/community/file/781156790581391771)
+
+다른 Pajamas 파일(아이콘, 일러스트 등)은 [GitLab Product Design 커뮤니티 페이지](https://www.figma.com/@GitLabDesign)에 있습니다.

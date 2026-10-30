@@ -20,10 +20,9 @@ npm ci
 | `material-symbols` | 아이콘 폰트(Outlined, Rounded, Sharp) | Apache-2.0 |
 | `@fontsource/roboto` | Roboto, Material 기본 폰트 | OFL-1.1 |
 | `@fontsource-variable/roboto-flex` | Roboto Flex 가변 폰트 | OFL-1.1 |
+| `@fontsource-variable/google-sans` | Google Sans 가변 폰트 | OFL-1.1 |
 | `@fontsource-variable/google-sans-flex` | Google Sans Flex 가변 폰트 | OFL-1.1 |
 | `@fontsource/google-sans-code` | Google Sans Code 고정폭 폰트 | OFL-1.1 |
-
-원조 Google Sans(정적 버전)는 공식 배포가 없어서 넣지 않았습니다.
 
 ## 파일 위치
 
@@ -37,6 +36,7 @@ npm ci
 번들러(Vite 등)를 쓰는 프로젝트에서 이렇게 불러옵니다.
 
 ```js
+import '@fontsource-variable/google-sans';
 import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/500.css';
 import 'material-symbols/outlined.css';
@@ -53,9 +53,11 @@ import '@material/web/all.js';
 ```bash
 ls node_modules/@material/web/tokens | head -3
 ls node_modules/material-symbols/*.woff2
-ls node_modules/@fontsource-variable/google-sans-flex/files | head -3
+ls node_modules/@fontsource-variable/google-sans/files | head -3
 ```
 
 ## Figma
 
-Figma 커뮤니티에서 "Material 3 Design Kit"를 검색하면 Google 공식 키트가 나옵니다. 레포에는 넣지 않습니다.
+Google 공식 키트: [Material 3 Design Kit](https://www.figma.com/community/file/1035203688168086460)
+
+색 테마를 바꾸려면 Figma 플러그인 "Material Theme Builder"를 함께 씁니다.

@@ -2,9 +2,9 @@
 
 GMA 프론트엔드를 하나의 디자인 시스템으로 통일하기 위한 후보 3종을 모아 둔 폴더입니다.
 
-라이브러리 코드와 폰트 파일은 레포에 직접 넣지 않았습니다. 각 폴더의 `package.json`과 `package-lock.json`이 받을 패키지와 버전을 고정해 두므로, `npm install` 한 번이면 모두 같은 버전을 받습니다.
+라이브러리 코드와 폰트 파일은 레포에 직접 넣지 않았습니다. 각 폴더의 `package.json`과 `package-lock.json`이 받을 패키지와 버전을 고정해 두므로, 설치 스크립트를 실행하면 모두 같은 버전을 받습니다.
 
-처음 받는 분은 [HANDOFF.md](HANDOFF.md)부터 읽어 주세요.
+처음 받는 분은 [HANDOFF.md](HANDOFF.md)부터 읽어 주세요. 설치는 GMA 폴더에서 `node design-system/setup.mjs` 한 줄이면 됩니다.
 
 ## 후보 비교
 
@@ -13,11 +13,12 @@ GMA 프론트엔드를 하나의 디자인 시스템으로 통일하기 위한 �
 | 폴더 | [material/](material/SETUP.md) | [base-web/](base-web/SETUP.md) | [pajamas/](pajamas/SETUP.md) |
 | 컴포넌트 | `@material/web` (Web Components) | `baseui` (React 18 + Styletron) | `@gitlab/ui` (Vue 2.7 + Tailwind 3) |
 | 프레임워크 제약 | 없음. React·Vue·순수 HTML 어디서나 동작 | React 전용 | Vue 2 전용 |
-| 기본 폰트 | Roboto, Roboto Flex (+ Google Sans Flex, Google Sans Code) | Uber Move — **비공개, 받을 수 없음** | GitLab Sans, GitLab Mono |
+| 기본 폰트 | Roboto, Roboto Flex (+ Google Sans, Google Sans Flex, Google Sans Code) | Uber Move — **비공개, 받을 수 없음** | GitLab Sans, GitLab Mono |
 | 아이콘 | Material Symbols | `baseui/icon` 내장 | `@gitlab/svgs` |
 | 디자인 토큰 | `@material/web/tokens` (Sass) | `baseui/themes`, `baseui/tokens` (JS) | `tokens.css`, `tokens.dark.css` (CSS 변수) |
 | 라이선스 | Apache-2.0 / 폰트 OFL-1.1 | MIT | MIT / 폰트 OFL-1.1 |
 | 공식 문서 | https://m3.material.io | https://baseweb.design | https://design.gitlab.com |
+| Figma 키트 | [Material 3 Design Kit](https://www.figma.com/community/file/1035203688168086460) | [Base Gallery](https://www.figma.com/community/file/805195278314519508) | [Pajamas Component library](https://www.figma.com/community/file/781156790581391771) |
 
 ## 고를 때 볼 점
 
@@ -29,7 +30,8 @@ GMA 프론트엔드를 하나의 디자인 시스템으로 통일하기 위한 �
 ```
 design-system/
 ├── README.md        # 이 문서
-├── HANDOFF.md       # 인수인계: 받는 법, 확인하는 법, 규칙
+├── HANDOFF.md       # 인수인계: 건우가 한 일, 할 일 순서, 문제 해결
+├── setup.mjs        # 세 시스템 설치 + 확인 스크립트
 ├── material/        # package.json, package-lock.json, SETUP.md
 ├── base-web/        # package.json, package-lock.json, SETUP.md
 └── pajamas/         # package.json, package-lock.json, SETUP.md
