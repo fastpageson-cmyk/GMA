@@ -53,6 +53,8 @@ ls node_modules/@gitlab/svgs/dist/icons.svg
 
 ## Figma
 
-GitLab 공식 키트: [Pajamas Component library](https://www.figma.com/community/file/781156790581391771)
+팀 공유 파일(링크만 열면 됨): [열기](https://www.figma.com/design/P2m2ca70FaXbA8Mq5rT3KG/Component-library--Community-)
+
+원본 GitLab 공식 키트: [Pajamas Component library](https://www.figma.com/community/file/781156790581391771)
 
 다른 Pajamas 파일(아이콘, 일러스트 등)은 [GitLab Product Design 커뮤니티 페이지](https://www.figma.com/@GitLabDesign)에 있습니다.

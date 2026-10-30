@@ -24,6 +24,7 @@
   --f-m3: "M3 Roboto", system-ui, sans-serif;
   --f-base: system-ui, -apple-system, sans-serif;
   --f-gl: "GL Sans", system-ui, sans-serif;
+  --f-fl: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -38,7 +39,7 @@ a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; border-radius: 2px; }
 code, .hex { font-family: var(--font-data); font-size: 12px; }
 
-.wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px 96px; }
+.wrap { max-width: 1440px; margin: 0 auto; padding: 0 24px 96px; }
 header.top { padding: 56px 0 32px; }
 h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 12px; font-weight: 650; text-wrap: balance; }
 .lede { max-width: 68ch; color: var(--ink-2); margin: 0; }
@@ -47,7 +48,7 @@ h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; letter-spacing: -0.02
 /* 열 머리: 스크롤해도 어떤 시스템인지 보이도록 고정 */
 .cols {
   position: sticky; top: 0; z-index: 5;
-  display: grid; grid-template-columns: 168px repeat(3, minmax(0, 1fr)); gap: 0 24px;
+  display: grid; grid-template-columns: 168px repeat(4, minmax(0, 1fr)); gap: 0 24px;
   background: color-mix(in srgb, var(--paper) 92%, transparent);
   backdrop-filter: saturate(1.2) blur(8px);
   border-bottom: 1px solid var(--rule-strong);
@@ -56,10 +57,11 @@ h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; letter-spacing: -0.02
 .cols div { font-weight: 650; font-size: 17px; }
 .cols .m3 { font-family: var(--f-m3); font-weight: 500; }
 .cols .gl { font-family: var(--f-gl); font-weight: 600; }
+.cols .fl { font-family: var(--f-fl); font-weight: 600; }
 .cols small { display: block; font: 12px/1.4 var(--font-ui); color: var(--ink-2); font-weight: 400; }
 
 section.row {
-  display: grid; grid-template-columns: 168px repeat(3, minmax(0, 1fr)); gap: 0 24px;
+  display: grid; grid-template-columns: 168px repeat(4, minmax(0, 1fr)); gap: 0 24px;
   padding: 40px 0; border-bottom: 1px solid var(--rule);
 }
 .row > h2 { font-size: 15px; font-weight: 650; margin: 2px 0 0; }
@@ -88,6 +90,7 @@ dl.facts dd { margin: 0; }
 .f-m3 { font-family: var(--f-m3); }
 .f-base { font-family: var(--f-base); }
 .f-gl { font-family: var(--f-gl); }
+.f-fl { font-family: var(--f-fl); }
 
 /* 모서리 */
 .radii { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -121,7 +124,7 @@ dl.facts dd { margin: 0; }
 <div class="wrap">
 
 <header class="top">
-  <h1>디자인 시스템 후보 3종 비교</h1>
+  <h1>디자인 시스템 후보 4종 비교</h1>
   <p class="lede">색, 글자, 모서리, 그림자, 버튼을 같은 줄에 놓았습니다. 값은 각 시스템의 <strong>코드(npm) 토큰</strong>을 기준으로 하고, Figma 키트와 다른 곳은 따로 표시했습니다. 폰트는 <code>node design-system/setup.mjs</code>로 설치한 실제 파일을 씁니다.</p>
 </header>
 
@@ -130,6 +133,7 @@ dl.facts dd { margin: 0; }
   <div class="m3">Material 3<small>Google</small></div>
   <div class="base">Base Web<small>Uber</small></div>
   <div class="gl">Pajamas<small>GitLab</small></div>
+  <div class="fl">Fluent 2<small>Microsoft</small></div>
 </div>
 
 <!-- 한눈에 -->
@@ -140,7 +144,7 @@ dl.facts dd { margin: 0; }
       <dt>코드</dt><dd>Web Components, 프레임워크 무관</dd>
       <dt>폰트</dt><dd>Roboto (받을 수 있음)</dd>
       <dt>라이선스</dt><dd>Apache-2.0</dd>
-      <dt>Figma</dt><dd><a href="https://www.figma.com/community/file/1035203688168086460">Material 3 Design Kit</a>, 변수 304개</dd>
+      <dt>Figma</dt><dd><a href="https://www.figma.com/design/vtsIW24M4Kt6p68FtjLu88/Material-3-Design-Kit--Community-">Material 3 Design Kit</a>, 변수 304개</dd>
       <dt>문서</dt><dd><a href="https://m3.material.io">m3.material.io</a></dd>
     </dl>
   </div>
@@ -149,7 +153,7 @@ dl.facts dd { margin: 0; }
       <dt>코드</dt><dd>React 18 전용</dd>
       <dt>폰트</dt><dd class="warn">Uber Move (비공개, 받을 수 없음)</dd>
       <dt>라이선스</dt><dd>MIT</dd>
-      <dt>Figma</dt><dd><a href="https://www.figma.com/community/file/805195278314519508">Base Gallery</a>, <span class="warn">색이 코드보다 옛 버전</span></dd>
+      <dt>Figma</dt><dd><a href="https://www.figma.com/design/09cjcozFxN8qeM9ifoZXBf/Base-Gallery--Community-">Base Gallery</a>, <span class="warn">색이 코드보다 옛 버전</span></dd>
       <dt>문서</dt><dd><a href="https://baseweb.design">baseweb.design</a></dd>
     </dl>
   </div>
@@ -158,8 +162,17 @@ dl.facts dd { margin: 0; }
       <dt>코드</dt><dd>Vue 2.7 전용</dd>
       <dt>폰트</dt><dd>GitLab Sans, GitLab Mono (받을 수 있음)</dd>
       <dt>라이선스</dt><dd>MIT</dd>
-      <dt>Figma</dt><dd><a href="https://www.figma.com/community/file/781156790581391771">Component library</a>, <span class="warn">색 변수 없음</span></dd>
+      <dt>Figma</dt><dd><a href="https://www.figma.com/design/P2m2ca70FaXbA8Mq5rT3KG/Component-library--Community-">Component library</a>, <span class="warn">색 변수 없음</span></dd>
       <dt>문서</dt><dd><a href="https://design.gitlab.com">design.gitlab.com</a></dd>
+    </dl>
+  </div>
+  <div class="cell"><div class="sys">Fluent 2</div>
+    <dl class="facts">
+      <dt>코드</dt><dd>React 전용</dd>
+      <dt>폰트</dt><dd class="warn">Segoe UI (Windows 내장, 받을 수 없음)</dd>
+      <dt>라이선스</dt><dd>MIT</dd>
+      <dt>Figma</dt><dd><a href="https://www.figma.com/design/z93KF8UjOdylHlqZKcdng3/Microsoft-Fluent-2-Web--Community-">Fluent 2 Web</a></dd>
+      <dt>문서</dt><dd><a href="https://fluent2.microsoft.design">fluent2.microsoft.design</a></dd>
     </dl>
   </div>
 </section>
@@ -227,11 +240,31 @@ dl.facts dd { margin: 0; }
       <div class="sw"><i style="background:#4d4b4e"></i><span><b>테두리</b><span class="hex">#4D4B4E</span></span></div>
     </div>
   </div>
+  <div class="cell"><div class="sys">Fluent 2</div>
+    <p class="mode">라이트</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#0f6cbd"></i><span><b>주 색</b><span class="hex">#0F6CBD</span></span></div>
+      <div class="sw"><i style="background:#424242"></i><span><b>보조 글자</b><span class="hex">#424242</span></span></div>
+      <div class="sw"><i style="background:#b10e1c"></i><span><b>오류</b><span class="hex">#B10E1C</span></span></div>
+      <div class="sw"><i style="background:#ffffff"></i><span><b>배경</b><span class="hex">#FFFFFF</span></span></div>
+      <div class="sw"><i style="background:#242424"></i><span><b>본문 글자</b><span class="hex">#242424</span></span></div>
+      <div class="sw"><i style="background:#d1d1d1"></i><span><b>테두리</b><span class="hex">#D1D1D1</span></span></div>
+    </div>
+    <p class="mode">다크</p>
+    <div class="swatches">
+      <div class="sw"><i style="background:#115ea3"></i><span><b>주 색</b><span class="hex">#115EA3</span></span></div>
+      <div class="sw"><i style="background:#d6d6d6"></i><span><b>보조 글자</b><span class="hex">#D6D6D6</span></span></div>
+      <div class="sw"><i style="background:#dc626d"></i><span><b>오류</b><span class="hex">#DC626D</span></span></div>
+      <div class="sw"><i style="background:#292929"></i><span><b>배경</b><span class="hex">#292929</span></span></div>
+      <div class="sw"><i style="background:#ffffff"></i><span><b>본문 글자</b><span class="hex">#FFFFFF</span></span></div>
+      <div class="sw"><i style="background:#666666"></i><span><b>테두리</b><span class="hex">#666666</span></span></div>
+    </div>
+  </div>
 </section>
 
 <!-- 글자 -->
 <section class="row">
-  <h2>글자<span>각 시스템 폰트로 그림. 한글은 세 폰트 모두 지원하지 않아 운영체제 폰트로 보임</span></h2>
+  <h2>글자<span>각 시스템 폰트로 그림. 한글은 네 폰트 모두 지원하지 않아 운영체제 폰트로 보임</span></h2>
   <div class="cell f-m3"><div class="sys">Material 3</div>
     <div class="ramp">
       <p style="font-size:45px;line-height:52px"><span class="meta">Display M · 45/52</span>Aa 123</p>
@@ -260,6 +293,16 @@ dl.facts dd { margin: 0; }
       <p style="font-size:14px;line-height:16px"><span class="meta">Label · 14/16</span>Button label</p>
       <p style="font-size:16px;line-height:24px"><span class="meta">Paragraph lg · 16/24</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
       <p style="font-size:14px;line-height:20px"><span class="meta">Paragraph · 14/20</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
+    </div>
+  </div>
+  <div class="cell f-fl"><div class="sys">Fluent 2</div>
+    <div class="ramp">
+      <p style="font-size:40px;line-height:52px;font-weight:600"><span class="meta">Large title · 40/52 · 600</span>Aa 123</p>
+      <p style="font-size:28px;line-height:36px;font-weight:600"><span class="meta">Title 2 · 28/36 · 600</span>Design system</p>
+      <p style="font-size:20px;line-height:28px;font-weight:600"><span class="meta">Subtitle 1 · 20/28 · 600</span>Pick one system</p>
+      <p style="font-size:14px;line-height:20px;font-weight:600"><span class="meta">Body 1 Strong · 14/20 · 600</span>Button label</p>
+      <p style="font-size:16px;line-height:22px"><span class="meta">Body 2 · 16/22</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
+      <p style="font-size:14px;line-height:20px"><span class="meta">Body 1 · 14/20</span>The quick brown fox jumps over the lazy dog. 다람쥐 헌 쳇바퀴에 타고파.</p>
     </div>
   </div>
 </section>
@@ -298,6 +341,16 @@ dl.facts dd { margin: 0; }
     </div>
     <p class="cap">작은 반경을 주로 써서 촘촘한 화면에 맞습니다.</p>
   </div>
+  <div class="cell"><div class="sys">Fluent 2</div>
+    <div class="radii">
+      <figure><div style="border-radius:2px"></div>2</figure>
+      <figure><div style="border-radius:4px"></div>4</figure>
+      <figure><div style="border-radius:6px"></div>6</figure>
+      <figure><div style="border-radius:8px"></div>8</figure>
+      <figure><div style="border-radius:999px"></div>full</figure>
+    </div>
+    <p class="cap">버튼은 기본 4px로 살짝 둥근 사각형입니다.</p>
+  </div>
 </section>
 
 <!-- 그림자 -->
@@ -324,6 +377,13 @@ dl.facts dd { margin: 0; }
       <figure style="box-shadow:0 4px 12px 0 #05050629,0 0 2px 0 #05050629,0 0 2px 0 #05050629">shadow-lg<figcaption>모달</figcaption></figure>
     </div>
   </div>
+  <div class="cell"><div class="sys">Fluent 2</div>
+    <div class="shadows">
+      <figure style="box-shadow:0 0 2px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.14)">shadow4<figcaption>카드</figcaption></figure>
+      <figure style="box-shadow:0 0 2px rgba(0,0,0,.12),0 8px 16px rgba(0,0,0,.14)">shadow16<figcaption>팝오버, 메뉴</figcaption></figure>
+      <figure style="box-shadow:0 0 8px rgba(0,0,0,.12),0 32px 64px rgba(0,0,0,.14)">shadow64<figcaption>대화상자</figcaption></figure>
+    </div>
+  </div>
 </section>
 
 <!-- 버튼 -->
@@ -338,6 +398,9 @@ dl.facts dd { margin: 0; }
   </div>
   <div class="cell"><div class="sys">Pajamas</div>
     <a class="shot" href="pajamas/figma/buttons.png"><img src="pajamas/figma/buttons.png" alt="Pajamas 버튼 스티커 시트"></a>
+  </div>
+  <div class="cell"><div class="sys">Fluent 2</div>
+    <a class="shot" href="fluent/figma/buttons.png"><img src="fluent/figma/buttons.png" alt="Fluent 2 버튼 모음"></a>
   </div>
 </section>
 

@@ -1,4 +1,4 @@
-// 디자인 시스템 후보 3종을 한 번에 설치하고, 필요한 파일이 받아졌는지 확인합니다.
+// 디자인 시스템 후보 4종을 한 번에 설치하고, 필요한 파일이 받아졌는지 확인합니다.
 // 실행: GMA 폴더에서 `node design-system/setup.mjs`
 import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -28,6 +28,10 @@ const systems = {
     'node_modules/@gitlab/fonts/gitlab-sans/GitLabSans.woff2',
     'node_modules/@gitlab/svgs/dist/icons.svg',
   ],
+  fluent: [
+    'node_modules/@fluentui/react-components/lib/index.js',
+    'node_modules/@fluentui/react-icons/package.json',
+  ],
 };
 
 const major = Number(process.versions.node.split('.')[0]);
@@ -56,5 +60,5 @@ for (const [name, files] of Object.entries(systems)) {
   }
 }
 
-console.log(failed ? '\n일부 설치에 실패했습니다. 위 메시지를 확인해 주세요.' : '\n세 디자인 시스템 설치와 확인이 모두 끝났습니다.');
+console.log(failed ? '\n일부 설치에 실패했습니다. 위 메시지를 확인해 주세요.' : '\n네 디자인 시스템 설치와 확인이 모두 끝났습니다.');
 process.exit(failed ? 1 : 0);

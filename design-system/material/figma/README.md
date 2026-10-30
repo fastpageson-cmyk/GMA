@@ -1,6 +1,7 @@
 # Material 3 — Figma에서 가져온 값
 
-- 원본: [Material 3 Design Kit (Figma Community)](https://www.figma.com/community/file/1035203688168086460)
+- 팀 공유 파일: [Material 3 Design Kit](https://www.figma.com/design/vtsIW24M4Kt6p68FtjLu88/Material-3-Design-Kit--Community-)
+- 원본: [Figma Community](https://www.figma.com/community/file/1035203688168086460)
 - 추출일: 2026-10-30
 
 ## 들어 있는 파일

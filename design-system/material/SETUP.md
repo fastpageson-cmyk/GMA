@@ -58,6 +58,8 @@ ls node_modules/@fontsource-variable/google-sans/files | head -3
 
 ## Figma
 
-Google 공식 키트: [Material 3 Design Kit](https://www.figma.com/community/file/1035203688168086460)
+팀 공유 파일(링크만 열면 됨): [열기](https://www.figma.com/design/vtsIW24M4Kt6p68FtjLu88/Material-3-Design-Kit--Community-)
+
+원본 Google 공식 키트: [Material 3 Design Kit](https://www.figma.com/community/file/1035203688168086460)
 
 색 테마를 바꾸려면 Figma 플러그인 "Material Theme Builder"를 함께 씁니다.

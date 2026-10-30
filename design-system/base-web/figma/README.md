@@ -1,6 +1,7 @@
 # Uber Base — Figma에서 가져온 값
 
-- 원본: [Base Gallery (Figma Community)](https://www.figma.com/community/file/805195278314519508)
+- 팀 공유 파일: [Base Gallery](https://www.figma.com/design/09cjcozFxN8qeM9ifoZXBf/Base-Gallery--Community-)
+- 원본: [Figma Community](https://www.figma.com/community/file/805195278314519508)
 - 추출일: 2026-10-30
 
 ## 들어 있는 파일

@@ -21,7 +21,7 @@ GMA 저장소 작업 가이드입니다.
 
 `design-system/HANDOFF.md`를 읽고 아래 순서로 짧게 답합니다.
 
-1. **지금 하는 일**: 디자인 시스템 후보 3개 중 하나를 고르는 단계라고 1~2문장으로 설명합니다.
+1. **지금 하는 일**: 디자인 시스템 후보 4개(Material 3, Uber Base, GitLab Pajamas, Microsoft Fluent 2) 중 하나를 고르는 단계라고 1~2문장으로 설명합니다.
 2. **필요한 프로그램**: Git, Node.js, Figma 계정을 HANDOFF.md의 링크와 함께 알려 줍니다. 아래 "설치" 1번 방법으로 이미 설치된 것은 "이미 있음"으로 표시합니다.
 3. **다음 행동**: "설치는 제가 지금 바로 해 드릴까슴둥?"이라고 묻습니다.
 
@@ -36,15 +36,16 @@ GMA 저장소 작업 가이드입니다.
    - 아니면 사용자에게 받을 위치를 묻고(기본 제안: 홈 폴더 아래 `Projects/GMA`), `git clone https://github.com/fastpageson-cmyk/GMA.git <위치>`로 받은 뒤 그 폴더로 이동합니다.
 3. **설치와 확인**: 레포 루트에서 `node design-system/setup.mjs`를 실행합니다. 몇 분 걸리므로 시작 전에 알려 줍니다.
 4. **결과 보고**:
-   - 성공: 세 시스템이 모두 "확인 완료"인지 알려 주고, HANDOFF.md 3단계의 링크 표와 "고를 때 볼 점"을 그대로 보여 줍니다.
+   - 성공: 네 시스템이 모두 "확인 완료"인지 알려 주고, HANDOFF.md 3단계의 링크 표와 "고를 때 볼 점"을 그대로 보여 줍니다.
    - 실패: 오류 원문 한 줄, 원인, 해결 방법을 알려 주고, Claude가 고칠 수 있으면 고친 뒤 3번을 다시 실행합니다.
 5. `package.json`, `package-lock.json`은 사용자가 요청하지 않으면 수정하지 않습니다.
 
-### "Figma 받고 싶어", "피그마 키트 어떻게 받아?", "Figma에서 보고 싶어"
+### "Figma 보고 싶어", "피그마 어디서 봐?", "Figma 받아야 돼?"
 
-1. 먼저 Figma에서 가져온 값이 이미 레포에 있다고 알려 줍니다: `design-system/material/figma/`, `design-system/base-web/figma/`, `design-system/pajamas/figma/` (각 폴더의 `README.md`, `tokens.json`, 스크린샷).
-2. Figma에서 직접 만져 보고 싶다면, HANDOFF.md "2-1단계"대로 안내합니다. 링크 3개와 "Open in Figma"(한국어 화면은 "Figma에서 열기") 버튼을 누르면 Drafts에 복사본이 생긴다는 것까지 알려 줍니다. Figma 계정이 없으면 https://www.figma.com/signup 을 먼저 안내합니다.
-3. 커뮤니티 파일은 Figma 커넥터로 바로 읽을 수 없습니다. 반드시 사람이 복사본을 만들고 그 URL을 붙여 넣어야 한다고 설명합니다.
+1. 받을 필요 없이 **링크만 열면 된다**고 알려 줍니다. 팀이 함께 보는 Figma 파일 4개가 있습니다. HANDOFF.md 3단계 표의 "Figma 파일 (팀 공유)" 링크를 그대로 보여 줍니다.
+2. Figma 계정이 없으면 https://www.figma.com/signup 에서 무료 계정을 먼저 만들라고 안내합니다.
+3. 파일은 보기 전용이라고 알려 줍니다. 직접 고쳐 보고 싶으면 Figma 상단 파일 이름 옆 메뉴의 "복사본 만들기"(Duplicate)로 내 Drafts에 복사하면 된다고 안내합니다.
+4. 색·글자·그림자 값과 스크린샷은 레포의 `design-system/<시스템>/figma/`에도 있다고 덧붙입니다.
 
 ### 사용자가 Figma 파일 URL을 붙여 넣고 토큰을 뽑아 달라고 하면
 
@@ -54,12 +55,12 @@ GMA 저장소 작업 가이드입니다.
 4. 해당 시스템의 `design-system/<시스템>/figma/`에 기존 형식(`tokens.json`, `README.md`, PNG)대로 저장하고, 기존 값과 달라진 점을 알려 줍니다.
 5. 커밋과 push는 사용자가 요청할 때만 합니다.
 
-### "비교 페이지 열어 줘", "세 개 비교해서 보여 줘"
+### "비교 페이지 열어 줘", "비교해서 보여 줘"
 
 1. 설치가 안 되어 있으면(`design-system/material/node_modules`가 없으면) 먼저 "설치" 절차를 진행합니다. 폰트가 설치된 파일에서 불러와지기 때문입니다.
 2. `design-system` 폴더를 정적 서버로 띄웁니다. macOS는 `python3 -m http.server 8765 --directory design-system`, 그 밖에는 `npx --yes http-server design-system -p 8765`를 씁니다. 파일을 직접(`file://`) 열면 폰트가 안 보일 수 있습니다.
 3. 브라우저(앱의 브라우저 창이 있으면 그것)로 `http://localhost:8765/compare.html`을 엽니다.
-4. 페이지에서 볼 점을 세 줄로 요약해 줍니다: Base는 폰트를 받을 수 없음, Base Figma 색이 코드보다 옛 버전, 세 폰트 모두 한글을 지원하지 않아 한글 폰트를 따로 정해야 함.
+4. 페이지에서 볼 점을 짧게 요약해 줍니다: Base(Uber Move)와 Fluent(Segoe UI)는 폰트를 받을 수 없음, Base Figma 색이 코드보다 옛 버전, 네 시스템 폰트 모두 한글을 지원하지 않아 한글 폰트를 따로 정해야 함.
 
 ### 자주 나는 오류
 

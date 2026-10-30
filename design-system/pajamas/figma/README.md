@@ -1,6 +1,7 @@
 # GitLab Pajamas — Figma에서 가져온 값
 
-- 원본: [Pajamas Component library (Figma Community)](https://www.figma.com/community/file/781156790581391771)
+- 팀 공유 파일: [Pajamas Component library](https://www.figma.com/design/P2m2ca70FaXbA8Mq5rT3KG/Component-library--Community-)
+- 원본: [Figma Community](https://www.figma.com/community/file/781156790581391771)
 - 추출일: 2026-10-30
 
 ## 들어 있는 파일
