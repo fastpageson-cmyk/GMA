@@ -16,10 +16,10 @@ export const VERDICTS = {
   no: { label: '대상이 아니에요', short: '대상 아님', icon: 'block' },
 };
 
-/** 판정 3단계는 색만이 아니라 모양으로도 구분한다: 채운 상자, 점선 테두리, 회색 */
-export const verdictTag = (verdict) => {
+/** 판정 3단계는 색만이 아니라 모양으로도 구분한다: 채운 상자, 점선 테두리, 회색. left는 남은 확인 수 */
+export const verdictTag = (verdict, left = 0) => {
   const v = VERDICTS[verdict];
-  return v ? `<span class="verdict ${verdict}">${icon(v.icon)}${v.short}</span>` : '';
+  return v ? `<span class="verdict ${verdict}">${icon(v.icon)}${v.short}${left ? ` · ${left}가지` : ''}</span>` : '';
 };
 
 export function deadlineText(benefit) {
@@ -32,33 +32,32 @@ export function deadlineText(benefit) {
   return left === 0 ? '오늘 마감' : `D-${left}`;
 }
 
-/** 카드 한 줄: 온라인·서류 N개, 또는 확인할 조건. 조건 문장은 단정처럼 읽히지 않게 예시로 따로 둔다 */
+/** 카드 한 줄: 온라인·서류 N개, 대상이 아니면 막은 조건. 남은 확인 수는 판정 상자가 맡고 조건 문장은 상세에서 본다 */
 function cardLine(benefit, result) {
-  if (result.verdict === 'check' && result.unknown[0]) {
-    return { line: `${onlyDirectLeft(result) ? '직접 확인' : '확인'} ${result.unknown.length}가지 남음`, example: `예: ${result.unknown[0].label}` };
-  }
-  if (result.verdict === 'no' && result.failed[0]) return { line: `안 맞는 조건: ${result.failed[0].label}` };
+  if (result.verdict === 'no' && result.failed[0]) return `안 맞는 조건: ${result.failed[0].label}`;
   const method = { online: '온라인', visit: '방문', both: '온라인·방문' }[benefit.apply?.method];
   const docs = benefit.documents?.length;
-  return { line: [method && `${method} 신청`, docs ? `서류 ${docs}개` : null, benefit.apply?.cost === 'copay' ? '자부담 있음' : null].filter(Boolean).join(' · ') || benefit.oneLine };
+  return [method && `${method} 신청`, docs ? `서류 ${docs}개` : null, benefit.apply?.cost === 'copay' ? '자부담 있음' : null].filter(Boolean).join(' · ') || benefit.oneLine;
 }
 
 export function benefitCard(benefit, profile, reason) {
   const result = judge(benefit, profile);
   const closed = effectiveStatus(benefit).status === 'closed';
-  const { line, example } = reason ? { line: reason } : cardLine(benefit, result);
+  const line = reason ?? cardLine(benefit, result);
   return `<a class="m3-card outlined m3-interactive benefit-card${closed ? ' is-closed' : ''}" href="#/b/${esc(benefit.id)}">
     <md-ripple></md-ripple><md-focus-ring></md-focus-ring>
     <p class="card-meta"><span>${esc(benefit.sourceName)}</span><span class="deadline">${esc(deadlineText(benefit))}</span></p>
     <p class="card-amount">${esc(benefit.amount.text)}</p>
     <h3 class="card-title">${esc(benefit.title)}</h3>
     <p class="card-line">${esc(line)}</p>
-    ${example ? `<p class="card-example">${esc(example)}</p>` : ''}
-    ${verdictTag(result.verdict)}
+    ${verdictTag(result.verdict, result.verdict === 'check' ? result.unknown.length : 0)}
   </a>`;
 }
 
 export const cardGrid = (benefits, profile) => `<div class="card-grid">${benefits.map((b) => benefitCard(b, profile)).join('')}</div>`;
+
+/** 접어 두는 묶음. 목록의 대상 아님·마감과 질문 답변의 알아들은 내용이 같이 쓴다 */
+export const fold = (title, body, open) => (body ? `<details class="fold"${open ? ' open' : ''}><summary class="m3-interactive"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><span>${title}</span>${icon('keyboard_arrow_down')}</summary><div class="fold-body">${body}</div></details>` : '');
 
 /** 내 조건 요약 한 줄. 조각마다 묶어 줄이 바뀌어도 가운뎃점이 줄 끝에 남는다 */
 export function profileSummary(p) {
@@ -96,11 +95,12 @@ function regionField(p) {
   <p class="hint">시·군·구까지 고르면 더 정확해요.</p>`;
 }
 
-const singleChips = (name, label, options, value) => `<md-chip-set class="single-chips" data-name="${name}" role="group" aria-label="${esc(label)}">
-  ${options.map(([v, l]) => `<md-filter-chip label="${esc(l)}" data-value="${esc(v)}"${v === value ? ' selected' : ''}></md-filter-chip>`).join('')}
-</md-chip-set>`;
+const radioRow = (name, value, label, checked) => `<label class="radio-row"><md-radio name="${name}" value="${value}" touch-target="wrapper"${checked ? ' checked' : ''}></md-radio><span>${esc(label)}</span></label>`;
 
-const statusField = (p) => `<div class="field" data-field="status">${singleChips('status', '지금 상태', Object.entries(STATUS_LABELS), p.status)}<p class="field-error" role="alert" hidden>지금 상태를 골라 주세요</p></div>`;
+const statusField = (p) => `<div class="field" data-field="status">
+  <div class="radio-list two" role="radiogroup" aria-label="지금 상태">${Object.entries(STATUS_LABELS).map(([v, l]) => radioRow('status', v, l, v === p.status)).join('')}</div>
+  <p class="field-error" role="alert" hidden>지금 상태를 골라 주세요</p>
+</div>`;
 
 const schoolField = (p, always) => `<div class="field" data-field="school"${always || p.status === 'student' ? '' : ' hidden'}>
   <md-outlined-select name="schoolId" label="학교 고르기" menu-positioning="popover">${SCHOOLS.map((s) => option(s.id, s.label, s.id === p.schoolId)).join('')}</md-outlined-select>
@@ -108,7 +108,7 @@ const schoolField = (p, always) => `<div class="field" data-field="school"${alwa
 
 const incomeField = (p) => `<p class="hint">우리 집 소득이 전국 가구의 가운데쯤이면 100%예요.</p>
 <div class="field radio-list" data-field="income" role="radiogroup" aria-label="가구 소득">
-  ${Object.entries(INCOME_BANDS).map(([v, band]) => `<label class="radio-row"><md-radio name="income" value="${v}" touch-target="wrapper"${(p.income ?? 'unknown') === v ? ' checked' : ''}></md-radio><span>${v === 'unknown' ? '모르겠어요' : esc(band.label)}</span></label>`).join('')}
+  ${Object.entries(INCOME_BANDS).map(([v, band]) => radioRow('income', v, v === 'unknown' ? '모르겠어요' : band.label, (p.income ?? 'unknown') === v)).join('')}
 </div>`;
 
 const FIELD_HTML = { birthYear: birthYearField, region: regionField, status: statusField, income: incomeField };
@@ -149,10 +149,13 @@ export function wireFields(root) {
       set.querySelectorAll('md-filter-chip').forEach((c) => { if (c !== chip) c.selected = false; });
       const error = set.parentElement.querySelector('.field-error');
       if (error) error.hidden = true;
-      const group = root.querySelector('[data-group="school"]');
-      if (set.dataset.name === 'status' && group) group.hidden = !(chip.selected && chip.dataset.value === 'student');
     });
   });
+  root.querySelectorAll('[data-field="status"]').forEach((field) => field.addEventListener('change', (e) => {
+    field.querySelector('.field-error').hidden = true;
+    const group = root.querySelector('[data-group="school"]');
+    if (group) group.hidden = e.target.value !== 'student';
+  }));
   root.querySelectorAll('[error-text]').forEach(clearErrorOnEdit);
 }
 
@@ -175,7 +178,7 @@ export function checkFields(root) {
   const status = root.querySelector('[data-field="status"]');
   const statusMissing = status && !readFields(root).status;
   if (status) status.querySelector('.field-error').hidden = !statusMissing;
-  const first = required.find((s) => s.error) ?? (statusMissing ? status.querySelector('md-filter-chip') : null);
+  const first = required.find((s) => s.error) ?? (statusMissing ? status.querySelector('md-radio') : null);
   if (first) focusCentered(first);
   return !first;
 }
@@ -183,15 +186,14 @@ export function checkFields(root) {
 /** 입력칸에서 값을 읽어 프로필 조각으로 돌려준다. 빈칸은 뺀다. */
 export function readFields(root) {
   const value = (name) => root.querySelector(`md-outlined-select[name="${name}"]`)?.value || undefined;
-  const status = [...root.querySelectorAll('.single-chips[data-name="status"] md-filter-chip')].find((c) => c.selected);
-  const radio = [...root.querySelectorAll('md-radio[name="income"]')].find((r) => r.checked);
+  const radio = (name) => [...root.querySelectorAll(`md-radio[name="${name}"]`)].find((r) => r.checked)?.value;
   const patch = {
     birthYear: value('birthYear') ? Number(value('birthYear')) : undefined,
     sido: value('sido'),
     sigungu: value('sigungu'),
-    status: status?.dataset.value,
+    status: radio('status'),
     schoolId: value('schoolId'),
-    income: radio?.value,
+    income: radio('income'),
   };
   const filled = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined));
   // 시·도를 바꿔 시·군·구가 비면 저장된 옛 시·군·구도 지워야 한다
@@ -209,6 +211,8 @@ export function rankBenefits(benefits, profile) {
 }
 
 export const openBenefits = () => BENEFITS.filter((b) => effectiveStatus(b).status === 'open');
+/** 마감일이 정해진 열린 혜택을 마감 빠른 순으로 */
+export const closingSoon = (limit) => openBenefits().filter((b) => daysLeft(b) !== null).sort((a, b) => daysLeft(a) - daysLeft(b)).slice(0, limit);
 export const findBenefit = (id) => BENEFITS.find((b) => b.id === id);
 
 /** 마감 혜택의 대안: 같은 분야에서 지금 열린 것. 원래 혜택의 지역을 제외한 사업은 대안이 아니다 */

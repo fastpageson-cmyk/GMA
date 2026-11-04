@@ -2,7 +2,7 @@
 // 언어 모델이 붙기 전까지는 search.js의 사전과 규칙으로 돌아간다.
 import { BENEFITS } from '../data/benefits.js';
 import { categoryLabel } from '../data/lookups.js';
-import { benefitCard, categoryChips, checkFields, esc, focusCentered, icon, openBenefits, profileFields, rankBenefits, readCategoryChips, readFields, wireFields } from '../ui.js';
+import { benefitCard, categoryChips, checkFields, esc, focusCentered, fold, icon, openBenefits, profileFields, rankBenefits, readCategoryChips, readFields, wireFields } from '../ui.js';
 import { effectiveStatus, INCOME_BANDS, judge, STATUS_LABELS } from '../judge.js';
 import { changedSlots, directHits, heardAnything, parseSentence, searchBenefits, turnProfile } from '../search.js';
 import { getProfile, saveProfile } from '../store.js';
@@ -17,7 +17,7 @@ let turns = [];
 // 관심 분야는 문장에서 뽑은 값을 쓰되, 사용자가 고쳤으면 고친 값을 따른다
 const interestsOf = (turn) => turn.interests ?? turn.parsed.interests;
 
-function recommend(turn) {
+export function recommend(turn) {
   const profile = turn.profile;
   const interests = interestsOf(turn);
   const open = openBenefits();
@@ -31,6 +31,15 @@ function recommend(turn) {
   return { cards: usable.slice(0, 4), matched: found.length > 0, blocked, closed };
 }
 
+/** 답을 한 문장으로 먼저 말한다. 찾던 것이 마감이면 마감이라고, 없으면 없다고 한다 */
+export function answerLead(turn, { cards, matched, closed }) {
+  if (closed.length && !directHits(turn.q, cards).length) return ['찾던 혜택은 지금 마감이에요', cards.length ? '대신 지금 열린 혜택을 골랐어요.' : '지금 열린 혜택 중에는 맞는 게 없어요.'];
+  if (!cards.length) return ['지금 열린 혜택 중에는 맞는 게 없어요'];
+  if (!matched) return ['딱 맞는 혜택은 없어요', '지금 열린 혜택 중 가까운 것을 골랐어요. 이걸 찾으셨나요?'];
+  const eligible = cards.filter((b) => judge(b, turn.profile).verdict === 'eligible').length;
+  return [eligible ? `받을 수 있는 혜택 ${eligible}개를 찾았어요` : `지금 열린 혜택 ${cards.length}개를 골랐어요`];
+}
+
 /** 판정에 꼭 필요한데 비어 있는 조건 하나. 한 번만 묻는다. */
 function missingSlot(cards, profile) {
   const counts = {};
@@ -40,6 +49,12 @@ function missingSlot(cards, profile) {
     if (slot && empty) counts[slot] = (counts[slot] ?? 0) + 1;
   }));
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0];
+}
+
+/** 접어 둔 줄에 보이는 알아들은 내용 */
+function heardLine(turn) {
+  const p = turn.profile;
+  return [[p.sido, p.sigungu].filter(Boolean).join(' '), p.birthYear && `${p.birthYear}년생`, STATUS_LABELS[p.status], interestsOf(turn).map(categoryLabel).join(', ')].filter(Boolean).join(' · ');
 }
 
 function understoodChips(turn, index) {
@@ -78,33 +93,38 @@ const turnShell = (turn, body) => `<article class="turn" tabindex="-1">
   </article>`;
 
 const notUnderstood = (turn) => turnShell(turn, `
-  <p>무슨 말인지 잘 모르겠어요. 찾는 분야나 내 상황을 넣어 다시 물어봐 주세요.</p>
+  <h2 class="answer-lead">무슨 말인지 잘 모르겠어요</h2>
+  <p>찾는 분야나 내 상황을 넣어 다시 물어봐 주세요.</p>
   <md-chip-set aria-label="예시 문장">${SHORT_EXAMPLES.map((q) => `<md-suggestion-chip label="${esc(q)}" data-example="${esc(q)}"></md-suggestion-chip>`).join('')}</md-chip-set>
   <div class="button-row"><md-filled-tonal-button href="#/check">30초 자격 체크</md-filled-tonal-button></div>`);
 
-const closedNote = (b) => `<div class="notice-line closed-hit">${icon('schedule')}<span><b>지금 마감</b> ${esc(b.title)} (${esc(b.sourceName)})</span><md-text-button href="#/b/${esc(b.id)}">다음 모집 알림</md-text-button></div>`;
+const closedNote = (b) => `<div class="notice-line closed-hit">${icon('schedule')}<span>${esc(b.title)} (${esc(b.sourceName)})</span><md-text-button href="#/b/${esc(b.id)}">다음 모집 알림</md-text-button></div>`;
 
 function turnHtml(turn, index) {
   if (!heardAnything(turn.parsed)) return notUnderstood(turn);
-  const { cards, matched, blocked, closed } = recommend(turn);
+  const found = recommend(turn);
+  const { cards, blocked, closed } = found;
+  const [lead, sub] = answerLead(turn, found);
   const blockedNote = blocked.map((b) => `<p class="notice-line">${icon('block')}<span><b>대상 아님</b> ${esc(b.title)} · 안 맞는 조건: ${esc(judge(b, turn.profile).failed[0].label)}</span></p>`).join('');
   const slot = turn.editing ?? (turn.asked ? null : missingSlot(cards, turn.profile));
   const answer = !cards.length
-    ? '<p>지금 열린 혜택 중에는 맞는 게 없어요.</p><div class="button-row"><md-outlined-button href="#/list">전체 혜택 보기</md-outlined-button></div>'
-    : `${matched ? '' : '<p>딱 맞는 혜택은 없어서, 지금 열린 혜택 중 가까운 것을 골랐어요. 이걸 찾으셨나요?</p>'}
-       <div class="card-grid two">${cards.map((b) => {
+    ? '<div class="button-row"><md-outlined-button href="#/list">전체 혜택 보기</md-outlined-button></div>'
+    : `<div class="card-grid two">${cards.map((b) => {
          const r = judge(b, turn.profile);
          return benefitCard(b, turn.profile, r.verdict === 'eligible' ? '조건이 맞고 지금 신청할 수 있어요' : b.oneLine);
        }).join('')}</div>
        <p class="notice-line">${icon('info')}판정은 입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>`;
+  const editor = slot ? slotEditor(turn, index, slot, turn.editing ? '맞게 고쳐 주세요.' : SLOT_QUESTIONS[slot]) : '';
+  const heard = `<p class="hint">눌러서 고칠 수 있어요</p>${understoodChips(turn, index)}${turn.editing ? editor : ''}`;
   return turnShell(turn, `
-      <h2 class="answer-label">이렇게 알아들었어요 <span class="hint">눌러서 고칠 수 있어요</span></h2>
-      ${understoodChips(turn, index)}
-      ${saveOffer(turn, index)}
-      ${slot ? slotEditor(turn, index, slot, turn.editing ? '맞게 고쳐 주세요.' : SLOT_QUESTIONS[slot]) : ''}
+      <h2 class="answer-lead">${lead}</h2>
+      ${sub ? `<p>${sub}</p>` : ''}
       ${closed.map(closedNote).join('')}
       ${blockedNote}
-      ${answer}`);
+      ${answer}
+      ${turn.editing ? '' : editor}
+      ${fold(`이렇게 알아들었어요 <span class="hint">${esc(heardLine(turn))}</span>`, heard, Boolean(turn.editing))}
+      ${saveOffer(turn, index)}`);
 }
 
 function intro() {
@@ -131,8 +151,8 @@ export function ask(root, { query }) {
       <div class="turns" aria-live="polite"></div>
       <form class="ask-input" id="ask-form">
         <div class="m3-search-bar">
-          ${icon('search')}
-          <input name="q" aria-label="내 상황을 문장으로 물어보기" placeholder="내 상황을 문장으로 써 주세요" autocomplete="off">
+          ${icon('help_center')}
+          <input name="q" aria-label="내 상황을 문장으로 물어보기" placeholder="상황을 문장으로 써 주세요" autocomplete="off">
           <md-icon-button type="submit" aria-label="보내기">${icon('send')}</md-icon-button>
         </div>
       </form>

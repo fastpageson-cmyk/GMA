@@ -1,7 +1,7 @@
 // 맞춤 혜택 목록: 정부 정책과 학교 장학을 한 목록에. 모집 중이 기본, 대상 아님·마감은 접어 둔다.
 import { BENEFITS } from '../data/benefits.js';
 import { CATEGORIES, categoryLabel, SOURCES } from '../data/lookups.js';
-import { benefitCard, cardGrid, esc, icon, profileSummary, rankBenefits, verdictTag } from '../ui.js';
+import { benefitCard, cardGrid, esc, fold, icon, profileSummary, rankBenefits } from '../ui.js';
 import { daysLeft, effectiveStatus, judge, onlyDirectLeft } from '../judge.js';
 import { getProfile } from '../store.js';
 
@@ -35,8 +35,6 @@ function matches(b) {
   return true;
 }
 
-const fold = (title, cards, open) => (cards ? `<details class="fold"${open ? ' open' : ''}><summary class="m3-interactive"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><span>${title}</span>${icon('keyboard_arrow_down')}</summary><div class="fold-body">${cards}</div></details>` : '');
-
 const sourceLabel = (id) => SOURCES.find((s) => s.id === id)?.label ?? id;
 const activeFilters = () => [...[...filters.sources].map((id) => ['sources', id, sourceLabel(id)]), ...[...filters.cats].map((id) => ['cats', id, categoryLabel(id)])];
 
@@ -64,7 +62,7 @@ function clearSuggestion(profile) {
   return best?.count ? `‘${best.label}’ 걸러보기를 지우면 ${best.count}개가 나와요.` : '걸러보기를 줄여 보세요.';
 }
 
-function results(profile) {
+export function results(profile) {
   const all = BENEFITS.filter(matches);
   const by = (status) => all.filter((b) => effectiveStatus(b).status === status);
   const open = by('open');
@@ -87,25 +85,21 @@ function results(profile) {
     else heading = `지금 확인해 볼 ${scope}혜택 ${check.length}개`;
   }
 
-  // 0개는 가장 진한 상자로 앞세우지 않는다
-  const counts = profile ? `<div class="count-row">
-      ${[['eligible', eligible.length], ['check', check.length], ['no', no.length]].filter(([, n]) => n).map(([v, n]) => `<span class="count">${verdictTag(v)}<b>${n}</b></span>`).join('')}
-    </div>` : '';
-
   const folded = upcoming.length || no.length || closed.length;
   const empty = `<div class="empty-card"><p class="empty-title">이 조건으로는 지금 열린 혜택이 없어요.</p>
     <p>${clearSuggestion(profile)}${folded ? ' 아래 접어 둔 혜택도 살펴보세요.' : ''}</p>
     <md-outlined-button id="reset-filters">걸러보기 지우기</md-outlined-button></div>`;
 
-  const group = (title, items) => (items.length ? `<section class="verdict-group"><h2 class="group-title">${title} ${items.length}개</h2>${cardGrid(items, profile)}</section>` : '');
+  // 첫 묶음은 페이지 제목과 같은 말이라 눈에는 숨기고 제목 구조만 남긴다
+  const groups = [['받을 수 있어요', eligible], ['조건이 맞아요. 직접 확인만 남았어요', direct], ['더 확인해야 해요', others]].filter(([, items]) => items.length);
+  const group = ([title, items], i) => `<section class="verdict-group"><h2 class="${i ? 'section-title' : 'visually-hidden'}">${title} ${items.length}개</h2>${cardGrid(items, profile)}</section>`;
   const shown = profile
-    ? group('받을 수 있어요', eligible) + group('조건이 맞아요. 직접 확인만 남았어요', direct) + group('더 확인해야 해요', others)
+    ? groups.map(group).join('')
     : open.length ? `<section class="verdict-group"><h2 class="visually-hidden">지금 열린 혜택</h2>${cardGrid(order(open), null)}</section>` : '';
 
   return `
     <h1 class="page-title" tabindex="-1">${heading}</h1>
     ${profile && !eligible.length && direct.length ? '<p class="result-sub">상세에서 직접 확인을 마치면 받을 수 있음으로 바뀌어요.</p>' : ''}
-    ${counts}
     ${filterChips()}
     ${shown || empty}
     ${profile ? `<p class="notice-line">${icon('info')}판정은 입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>` : ''}

@@ -1,7 +1,7 @@
 // 혜택 상세 (가장 중요한 화면). 금액 → 이름 → 결과 → 얼마·누구·언제까지 → 탭.
 // 마감된 혜택도 같은 틀을 쓴다. SNS 링크로 바로 들어와도 이 화면에서 끝낼 수 있어야 한다.
 import { categoryLabel } from '../data/lookups.js';
-import { cardGrid, checkField, checkFields, deadlineText, EMAIL_PATTERN, esc, findBenefit, fmtDate, focusCentered, icon, profileFields, readFields, similarOpen, VERDICTS, wireFields } from '../ui.js';
+import { cardGrid, checkField, checkFields, closingSoon, deadlineText, EMAIL_PATTERN, esc, findBenefit, fmtDate, focusCentered, icon, profileFields, readFields, similarOpen, VERDICTS, wireFields } from '../ui.js';
 import { effectiveStatus, judge, missingFields, neededFields, STATUS_LABELS } from '../judge.js';
 import { addNextAlert, addReview, getAlert, getMyVote, getProfile, getReviews, getVotes, isSignedIn, saveProfile, signIn, vote } from '../store.js';
 import { hasPersonalNumber } from '../search.js';
@@ -30,6 +30,8 @@ function selfCheckList(result) {
 
 const extLink = (url, label) => `<a class="ext-link m3-interactive" href="${esc(url)}" target="_blank" rel="noopener"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>${label}${icon('open_in_new')}</a>`;
 
+const externalButton = (label, url, emphasis) => `<md-${emphasis}-button href="${esc(url)}" target="_blank" rel="noopener" trailing-icon>${label}${icon('open_in_new', 'icon')}</md-${emphasis}-button>`;
+
 const bandTitle = (verdict) => `${icon(VERDICTS[verdict].icon)}${VERDICTS[verdict].label}`;
 
 /** 띠 아래 행동. 대상이 아니면 신청 링크는 고정 버튼에서 내려와 여기에 남는다 */
@@ -37,7 +39,7 @@ function bandActions(verdict, canEdit, noticeUrl) {
   const actions = [
     verdict === 'no' && '<md-outlined-button data-tab-go="2">이 기준 때문에 못 받아요</md-outlined-button>',
     canEdit && '<md-text-button data-edit-conditions>조건 고치기</md-text-button>',
-    verdict === 'no' && noticeUrl && extLink(noticeUrl, '공고 직접 보기'),
+    verdict === 'no' && noticeUrl && externalButton('공고 직접 보기', noticeUrl, 'text'),
   ].filter(Boolean);
   return actions.length ? `<div class="band-actions">${actions.join('')}</div>` : '';
 }
@@ -185,15 +187,14 @@ function quickCheck(profile, fields, editing) {
 
 function applyBox(b, status, verdict, needsCheck) {
   const a = b.apply ?? {};
-  const external = (label, url, emphasis) => `<md-${emphasis}-button href="${esc(url)}" target="_blank" rel="noopener" trailing-icon>${label}${icon('open_in_new', 'icon')}</md-${emphasis}-button>`;
   if (status === 'closed') return '<md-filled-button disabled>신청 마감</md-filled-button>';
   if (verdict === 'no') return `<md-filled-button href="#/list?all=1">${ALTERNATIVES}</md-filled-button>`;
   if (status === 'upcoming') return '<md-filled-button disabled>아직 열리지 않았어요</md-filled-button>';
   const emphasis = needsCheck ? 'outlined' : 'filled';
-  if (a.method === 'visit') return `${external('방문 신청 안내 보기', a.url ?? b.originalUrl, emphasis)}<p class="hint">이 혜택은 온라인 신청이 없어요.</p>`;
+  if (a.method === 'visit') return `${externalButton('방문 신청 안내 보기', a.url ?? b.originalUrl, emphasis)}<p class="hint">이 혜택은 온라인 신청이 없어요.</p>`;
   const url = a.url ?? b.originalUrl;
   const note = a.url ? (a.loginRequired ? '해당 사이트에서 로그인이 필요해요.' : '해당 공고 페이지로 바로 가요.') : '신청 페이지를 아직 찾지 못해 원문 공고로 가요.';
-  return `${external(a.url ? '신청 페이지로 바로 가기' : '원문 공고로 가기', url, emphasis)}<p class="hint">${note}</p>`;
+  return `${externalButton(a.url ? '신청 페이지로 바로 가기' : '원문 공고로 가기', url, emphasis)}<p class="hint">${note}</p>`;
 }
 
 const NEXT_ALERT_DONE = `<p class="info-title">${icon('check_circle')}다음 모집이 열리면 메일로 알려 드릴게요</p><p class="hint">시제품이라 실제 메일은 가지 않아요.</p>`;
@@ -227,7 +228,11 @@ function closedBlock(b, reason, profile) {
 export function detail(root, { params, query }) {
   const b = findBenefit(params[0]);
   if (!b) {
-    root.innerHTML = '<div class="narrow"><h1 class="page-title" tabindex="-1">찾는 혜택이 없어요</h1><p>링크가 바뀌었거나 삭제된 혜택이에요.</p><md-filled-button href="#/list">혜택 목록 보기</md-filled-button></div>';
+    const soon = closingSoon(3);
+    root.innerHTML = `<h1 class="page-title" tabindex="-1">찾는 혜택이 없어요</h1>
+      <p class="page-sub">링크가 바뀌었거나 삭제된 혜택이에요.</p>
+      <md-filled-button href="#/list">혜택 목록 보기</md-filled-button>
+      ${soon.length ? `<section class="section"><h2 class="section-title">곧 마감</h2>${cardGrid(soon, getProfile())}</section>` : ''}`;
     return;
   }
 
@@ -259,8 +264,8 @@ export function detail(root, { params, query }) {
           ${closed ? '' : quickCheck(profile, fields, editing)}
           <div class="apply-box${sticky ? ' sticky' : ''}">${applyBox(b, status, result.verdict, needsCheck)}</div>
           <div class="side-actions">
-            <md-outlined-button id="share">${icon('share', 'icon')}공유</md-outlined-button>
-            ${closed ? '' : `<md-outlined-button href="#/alert?benefit=${esc(b.id)}">${icon('notifications', 'icon')}알림 받기</md-outlined-button>`}
+            <md-text-button id="share">${icon('share', 'icon')}공유</md-text-button>
+            ${closed ? '' : `<md-text-button href="#/alert?benefit=${esc(b.id)}">${icon('notifications', 'icon')}알림 받기</md-text-button>`}
             <p class="hint share-note" id="share-note" role="status" hidden></p>
           </div>
         </aside>

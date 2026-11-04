@@ -5,7 +5,9 @@ import { BENEFITS } from '../src/js/data/benefits.js';
 import { daysLeft, effectiveStatus, INCOME_BANDS, judge, missingFields, neededFields, onlyDirectLeft } from '../src/js/judge.js';
 import { changedSlots, directHits, hasPersonalNumber, heardAnything, parseSentence, searchBenefits, turnProfile } from '../src/js/search.js';
 import { addNextAlert, getAlert, getProfile, saveAlert, saveProfile } from '../src/js/store.js';
-import { EMAIL_PATTERN, openBenefits, rankBenefits, similarOpen } from '../src/js/ui.js';
+import { benefitCard, closingSoon, EMAIL_PATTERN, fold, openBenefits, rankBenefits, similarOpen, verdictTag } from '../src/js/ui.js';
+import { answerLead, recommend } from '../src/js/views/ask.js';
+import { results } from '../src/js/views/list.js';
 
 const base = { eligibility: { birthYearMin: 1992, birthYearMax: 2007, regions: ['경기도 용인시'], statuses: ['student', 'jobseeker'] } };
 const me = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', income: 'low' };
@@ -300,4 +302,56 @@ test('시범 데이터: 용인 혜택의 대안에 용인을 제외한 사업을
 
 test('소득 구간은 쉬운 말이 앞에 온다', () => {
   for (const key of ['low', 'mid', 'high']) assert.match(INCOME_BANDS[key].label, /^(낮은 편|중간쯤|높은 편) \(기준 중위소득/);
+});
+
+test('카드는 남은 확인 수를 판정 상자에 합치고 조건 문장을 싣지 않는다', () => {
+  const b = { id: 'x', title: '시범', sourceName: '용인시', amount: { text: '10만 원' }, period: { always: true }, eligibility: { regions: ['경기도'], other: ['가', '나'] } };
+  const html = benefitCard(b, { sido: '경기도' });
+  assert.match(html, /확인 필요 · 2가지/);
+  assert.doesNotMatch(html, /남음|예: /);
+  assert.equal(verdictTag('eligible').includes('가지'), false);
+  // 아직 판정 전이면 상자가 없다
+  assert.doesNotMatch(benefitCard(b, null), /class="verdict/);
+});
+
+test('곧 마감은 마감일이 있는 열린 혜택을 빠른 순으로 준다', () => {
+  const left = closingSoon(6).map((b) => daysLeft(b));
+  assert.ok(left.length > 0 && left.length <= 6);
+  assert.deepEqual(left, [...left].sort((a, c) => a - c));
+  assert.ok(left.every((n) => n !== null));
+});
+
+test('접힌 묶음은 내용이 없으면 그리지 않고, open이면 펼쳐 둔다', () => {
+  assert.equal(fold('제목', 0), '');
+  assert.match(fold('제목', '내용', true), /<details class="fold" open>/);
+  assert.doesNotMatch(fold('제목', '내용', false), / open>/);
+});
+
+test('목록 머리는 같은 숫자를 반복하지 않는다', () => {
+  const p = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', schoolId: 'hufs', income: 'low' };
+  const html = results(p);
+  assert.doesNotMatch(html, /count-row/);
+  // 첫 묶음 제목은 페이지 제목과 같은 말이라 화면에서 숨긴다
+  assert.match(html.match(/<h2[^>]*>/)[0], /visually-hidden/);
+  assert.match(html, /대상 아님 \d+개/);
+});
+
+const heard = (q, saved = null) => {
+  const parsed = parseSentence(q, 2026);
+  const turn = { q, parsed, profile: turnProfile(saved, parsed) };
+  return answerLead(turn, recommend(turn));
+};
+
+test('시범 데이터: 찾던 혜택이 마감이면 답 문장이 먼저 마감이라고 말한다', () => {
+  assert.deepEqual(heard('용인 사는 24살 대학생인데 토익 지원 있어?'), ['찾던 혜택은 지금 마감이에요', '대신 지금 열린 혜택을 골랐어요.']);
+});
+
+test('시범 데이터: 낱말이 걸린 열린 혜택이 있으면 마감으로 답하지 않는다', () => {
+  assert.notEqual(heard('장학금 있어?', { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', schoolId: 'hufs' })[0], '찾던 혜택은 지금 마감이에요');
+});
+
+test('열린 혜택이 없으면 없다고 답한다', () => {
+  const none = { cards: [], matched: false, closed: [] };
+  assert.deepEqual(answerLead({ q: '월세', profile: {} }, none), ['지금 열린 혜택 중에는 맞는 게 없어요']);
+  assert.equal(answerLead({ q: '월세', profile: {} }, { ...none, closed: [{ title: '마감된 혜택' }] })[0], '찾던 혜택은 지금 마감이에요');
 });
