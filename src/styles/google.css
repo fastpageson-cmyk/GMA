@@ -1,0 +1,196 @@
+/*
+  google-design: Material Web(2.5.0)에 없는 컴포넌트와 화면 틀.
+  값의 출처
+  - 색, 모양, 글자, 높이, 폭: component-tokens.css의 공식 토큰 [A] (v0.192). 이 파일은 그 변수만 가리킨다.
+  - 안쪽 여백과 간격처럼 토큰에 없는 숫자: [D] 추정. m3 사양 그림의 4dp 단위 규칙을 따랐다. 줄 끝에 [D]를 적었다.
+  - 그림자는 직접 만들지 않는다. 공식 <md-elevation>을 안에 넣고 --md-elevation-level(0~5)만 정한다.
+  - 누름 물결과 포커스 고리도 공식 <md-ripple>, <md-focus-ring>을 안에 넣는다.
+  전제: tokens.css, component-tokens.css를 먼저 불러온다.
+*/
+
+/* ── 공통: 상호작용 요소 ── */
+.m3-interactive { position: relative; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; }
+.m3-interactive md-focus-ring { --md-focus-ring-shape: inherit; }
+
+/* ── 상단 앱 바 [A 높이·색·글자] ── */
+.m3-top-app-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 0;   /* 아이콘 버튼 사이 0 [A-db app-bar.icon-button-space] */
+  height: var(--md-comp-top-app-bar-small-container-height); padding: 0 4px;                               /* 앞뒤 4 [A-db app-bar.leading-space, trailing-space] */
+  background: var(--md-comp-top-app-bar-small-container-color); color: var(--md-comp-top-app-bar-small-headline-color);
+  transition: background-color var(--md-sys-motion-duration-short4) var(--md-sys-motion-easing-standard); }
+.m3-top-app-bar.is-scrolled { background: var(--md-comp-top-app-bar-small-on-scroll-container-color); }   /* 스크롤되면 색이 바뀐다 [A] */
+.m3-top-app-bar .headline { flex: 1; min-width: 0; margin: 0 0 0 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;   /* [D] */
+  font: var(--md-comp-top-app-bar-small-headline-type); letter-spacing: var(--md-sys-typescale-title-large-tracking); }
+.m3-top-app-bar .trailing { display: flex; gap: 0; color: var(--md-comp-top-app-bar-small-trailing-icon-color); }
+.m3-top-app-bar > .headline:first-child { margin-left: 12px; }   /* 앞 아이콘이 없으면 글자 시작을 본문 여백(16)에 맞춘다 [D] */
+@media (min-width: 600px) { .m3-top-app-bar > .headline:first-child { margin-left: 20px; } }   /* 본문 여백 24에 맞춤 [D] */
+.m3-top-app-bar.center .headline { text-align: center; margin: 0; }
+/* 중간·큰 앱 바: 제목이 아래 줄로 내려온다 */
+.m3-top-app-bar.medium, .m3-top-app-bar.large { flex-wrap: wrap; align-content: flex-start; padding-top: 8px; }   /* [D] */
+.m3-top-app-bar.medium { height: var(--md-comp-top-app-bar-medium-container-height); }
+.m3-top-app-bar.large { height: var(--md-comp-top-app-bar-large-container-height); }
+.m3-top-app-bar.medium .headline, .m3-top-app-bar.large .headline { order: 9; flex-basis: 100%; margin: 0; padding: 0 16px; white-space: normal; }   /* [D] */
+.m3-top-app-bar.medium .headline { font: var(--md-comp-top-app-bar-medium-headline-type); margin-top: 20px; }   /* [D] */
+.m3-top-app-bar.large .headline { font: var(--md-comp-top-app-bar-large-headline-type); margin-top: 36px; }     /* [D] */
+.m3-top-app-bar.medium .spacer, .m3-top-app-bar.large .spacer { flex: 1; }
+
+/* ── 내비게이션 바 (좁은 화면, 아래) [A] ── */
+.m3-navigation-bar { position: fixed; inset: auto 0 0 0; z-index: 20; display: flex; justify-content: space-around;
+  height: var(--md-comp-navigation-bar-container-height); padding-bottom: env(safe-area-inset-bottom);
+  background: var(--md-comp-navigation-bar-container-color); --md-elevation-level: 2; }                      /* level2 [A] */
+.m3-navigation-bar a, .m3-navigation-bar button { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;   /* 표시와 글자 사이 4 [A-db nav-bar.item.vertical.active-indicator.icon-label-space] */
+  border: 0; background: none; text-decoration: none; color: var(--md-comp-navigation-bar-inactive-label-text-color);
+  font: var(--md-sys-typescale-label-medium); letter-spacing: var(--md-sys-typescale-label-medium-tracking); }
+.m3-nav-indicator { position: relative; display: grid; place-items: center; border-radius: var(--md-sys-shape-corner-full);
+  width: var(--md-comp-navigation-bar-active-indicator-width); height: var(--md-comp-navigation-bar-active-indicator-height);
+  color: var(--md-comp-navigation-bar-inactive-icon-color); --md-ripple-hover-color: var(--md-sys-color-on-surface); }
+.m3-nav-indicator md-icon { --md-icon-size: var(--md-comp-navigation-bar-icon-size); }
+[aria-current="page"] > .m3-nav-indicator { background: var(--md-comp-navigation-bar-active-indicator-color); color: var(--md-comp-navigation-bar-active-icon-color); }
+.m3-navigation-bar [aria-current="page"] { color: var(--md-comp-navigation-bar-active-label-text-color); font-weight: var(--md-comp-navigation-bar-active-label-text-weight); }
+[aria-current="page"] > .m3-nav-indicator md-icon { font-variation-settings: 'FILL' 1; }   /* 선택된 내비 아이콘은 채운 모양 [A-doc icons] */
+.m3-navigation-bar md-focus-ring, .m3-navigation-rail md-focus-ring { --md-focus-ring-shape: var(--md-sys-shape-corner-full); }
+
+/* ── 내비게이션 레일 (중간 이상, 왼쪽) [A] ── */
+.m3-navigation-rail { position: sticky; top: 0; height: 100vh; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px;   /* 항목 사이 4 [A-db nav-rail.collapsed.item.vertical-space] */
+  width: var(--md-comp-navigation-rail-container-width); padding: 44px 0 12px;                                                                    /* 위 44 [A-db nav-rail.collapsed.top-space], 아래 [D] */
+  background: var(--md-comp-navigation-rail-container-color); box-sizing: border-box; }
+.m3-navigation-rail .fab-slot { margin: -32px 0 40px; }   /* 메뉴·FAB는 위 여백 안에서 시작 [D], 아래 항목까지 40 [A-db nav-rail.item.header-space-minimum] */
+.m3-navigation-rail a, .m3-navigation-rail button:not(.fab-slot *) { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; min-height: 56px;   /* 표시-글자 4 [A-db nav-rail.item.vertical.icon-label-space], 높이 56 [A-db nav-rail.item.short.container.height] */
+  border: 0; background: none; text-decoration: none; color: var(--md-comp-navigation-rail-inactive-label-text-color);
+  font: var(--md-comp-navigation-rail-label-text-type); letter-spacing: var(--md-sys-typescale-label-medium-tracking); }
+.m3-navigation-rail .m3-nav-indicator { width: var(--md-comp-navigation-rail-active-indicator-width); height: var(--md-comp-navigation-rail-active-indicator-height); color: var(--md-comp-navigation-rail-inactive-icon-color); }
+.m3-navigation-rail [aria-current="page"] > .m3-nav-indicator { background: var(--md-comp-navigation-rail-active-indicator-color); color: var(--md-comp-navigation-rail-active-icon-color); }
+.m3-navigation-rail [aria-current="page"] { color: var(--md-comp-navigation-rail-active-label-text-color); }
+
+/* ── 내비게이션 서랍 (넓은 화면 고정, 또는 모달) [A] ── */
+.m3-navigation-drawer { flex: none; width: var(--md-comp-navigation-drawer-container-width); max-width: calc(100vw - 56px); box-sizing: border-box;   /* 모달일 때 오른쪽에 56 남김 [D] */
+  padding: 12px; background: var(--md-comp-navigation-drawer-standard-container-color); overflow: auto; }                                        /* [D] */
+.m3-navigation-drawer .headline { margin: 18px 16px 8px; color: var(--md-comp-navigation-drawer-headline-color); font: var(--md-comp-navigation-drawer-headline-type); }   /* [D] */
+.m3-navigation-drawer a, .m3-navigation-drawer button { display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box;              /* [D] */
+  height: var(--md-comp-navigation-drawer-active-indicator-height); padding: 0 24px 0 16px; border: 0; border-radius: var(--md-comp-navigation-drawer-active-indicator-shape);   /* [D] */
+  background: none; text-decoration: none; color: var(--md-comp-navigation-drawer-inactive-label-text-color); font: var(--md-comp-navigation-drawer-label-text-type);
+  --md-focus-ring-shape: var(--md-sys-shape-corner-full); }
+.m3-navigation-drawer a md-icon, .m3-navigation-drawer button md-icon { color: var(--md-comp-navigation-drawer-inactive-icon-color); --md-icon-size: var(--md-comp-navigation-drawer-icon-size); }
+.m3-navigation-drawer [aria-current="page"] { background: var(--md-comp-navigation-drawer-active-indicator-color); color: var(--md-comp-navigation-drawer-active-label-text-color); }
+.m3-navigation-drawer [aria-current="page"] md-icon { color: var(--md-comp-navigation-drawer-active-icon-color); }
+.m3-navigation-drawer .badge { margin-left: auto; color: var(--md-comp-navigation-drawer-large-badge-label-color); font: var(--md-comp-navigation-drawer-large-badge-label-type); }
+.m3-navigation-drawer md-divider { margin: 8px 16px; width: auto; }   /* [D] */
+nav.m3-navigation-drawer { position: sticky; top: 0; height: 100vh; }   /* 고정 서랍은 화면 높이에 붙어 있다 [D] */
+/* 모달 서랍: <dialog class="m3-navigation-drawer modal"> */
+dialog.m3-navigation-drawer.modal { position: fixed; inset: 0 auto 0 0; height: 100%; max-height: none; margin: 0; border: 0;
+  background: var(--md-comp-navigation-drawer-modal-container-color); border-radius: var(--md-comp-navigation-drawer-container-shape); color: inherit; }
+dialog.m3-navigation-drawer.modal::backdrop, dialog.m3-sheet::backdrop { background: color-mix(in srgb, var(--md-comp-scrim-container-color) calc(var(--md-comp-scrim-container-opacity) * 100%), transparent); }   /* 32% [A] */
+
+/* ── 카드 [A] ── */
+.m3-card { position: relative; display: block; box-sizing: border-box; border-radius: var(--md-comp-elevated-card-container-shape); padding: 16px; color: var(--md-sys-color-on-surface); text-decoration: none; }   /* 안쪽 16 [D] */
+.m3-card.elevated { background: var(--md-comp-elevated-card-container-color); --md-elevation-level: 1; }   /* level1 [A] */
+.m3-card.filled { background: var(--md-comp-filled-card-container-color); }
+.m3-card.outlined { background: var(--md-comp-outlined-card-container-color); border: var(--md-comp-outlined-card-outline-width) solid var(--md-comp-outlined-card-outline-color); }
+.m3-card > md-icon { color: var(--md-comp-elevated-card-icon-color); }
+.m3-card .media { display: block; margin: -16px -16px 16px; border-radius: inherit; border-bottom-left-radius: 0; border-bottom-right-radius: 0; overflow: hidden; }   /* [D] */
+.m3-card .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }   /* [D] */
+
+/* ── 스낵바 [A] ── */
+.m3-snackbar { position: fixed; left: 50%; bottom: 16px; z-index: 50; display: flex; align-items: center; gap: 4px;   /* [D] */
+  min-height: var(--md-comp-snackbar-with-single-line-container-height); max-width: min(560px, calc(100vw - 32px)); box-sizing: border-box; padding: 4px 8px 4px 16px;   /* [D] */
+  border-radius: var(--md-comp-snackbar-container-shape); background: var(--md-comp-snackbar-container-color); color: var(--md-comp-snackbar-supporting-text-color);
+  font: var(--md-comp-snackbar-supporting-text-type); --md-elevation-level: 3;                                     /* level3 [A] */
+  transform: translate(-50%, 24px); opacity: 0; pointer-events: none;
+  transition: transform var(--md-sys-motion-duration-medium2) var(--md-sys-motion-easing-emphasized-decelerate), opacity var(--md-sys-motion-duration-short4) linear; }
+.m3-snackbar.open { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
+.m3-snackbar .text { flex: 1; padding: 10px 0; }   /* [D] */
+.m3-snackbar md-text-button { --md-text-button-label-text-color: var(--md-comp-snackbar-action-label-text-color); --md-text-button-hover-label-text-color: var(--md-comp-snackbar-action-label-text-color); --md-text-button-focus-label-text-color: var(--md-comp-snackbar-action-label-text-color); --md-text-button-pressed-label-text-color: var(--md-comp-snackbar-action-label-text-color); }
+.m3-snackbar md-icon-button { --md-icon-button-icon-color: var(--md-comp-snackbar-icon-color); --md-icon-button-hover-icon-color: var(--md-comp-snackbar-icon-color); }
+@media (min-width: 600px) { .m3-snackbar { left: 24px; transform: translate(0, 24px); } .m3-snackbar.open { transform: none; } }   /* 넓으면 왼쪽 아래 [D] */
+.m3-navigation-bar ~ .m3-snackbar, .has-navigation-bar .m3-snackbar { bottom: calc(var(--md-comp-navigation-bar-container-height) + 16px); }   /* 내비 바 위로 [D] */
+
+/* ── 시트: <dialog class="m3-sheet bottom|side"> ── */
+dialog.m3-sheet { border: 0; padding: 0; margin: 0; max-width: none; max-height: none; color: var(--md-sys-color-on-surface); }
+dialog.m3-sheet.bottom { inset: auto 0 0 0; width: 100%; max-width: 640px; margin-inline: auto; max-height: calc(100% - 72px); box-sizing: border-box; padding: 0 16px 24px;   /* 위 72 남김, 최대 640 [D] */
+  border-radius: var(--md-comp-sheet-bottom-docked-container-shape); background: var(--md-comp-sheet-bottom-docked-container-color); }
+dialog.m3-sheet.bottom .handle { display: block; width: var(--md-comp-sheet-bottom-docked-drag-handle-width); height: var(--md-comp-sheet-bottom-docked-drag-handle-height);
+  margin: 22px auto; border-radius: 2px; background: var(--md-comp-sheet-bottom-docked-drag-handle-color); opacity: 0.4; }   /* 위아래 22 [D], 투명도 [D] */
+dialog.m3-sheet.side { inset: 0 0 0 auto; height: 100%; width: min(400px, 100vw); box-sizing: border-box; padding: 12px 24px 24px;   /* 최대 400 [A-doc], 여백 [D] */
+  border-radius: var(--md-comp-sheet-side-docked-modal-container-shape); background: var(--md-comp-sheet-side-docked-modal-container-color); }
+dialog.m3-sheet.side header { display: flex; align-items: center; gap: 8px; min-height: 64px; }   /* [D] */
+dialog.m3-sheet.side h2 { flex: 1; margin: 0; color: var(--md-comp-sheet-side-docked-headline-color); font: var(--md-comp-sheet-side-docked-headline-type); }
+
+/* ── 배지 [A] ── */
+.m3-badge-anchor { position: relative; display: inline-flex; }
+.m3-badge { position: absolute; top: 0; right: 0; transform: translate(40%, -30%); box-sizing: border-box;   /* 위치 [D] */
+  min-width: var(--md-comp-badge-size); height: var(--md-comp-badge-size); border-radius: var(--md-comp-badge-shape); background: var(--md-comp-badge-color); }
+.m3-badge.large { min-width: var(--md-comp-badge-large-size); height: var(--md-comp-badge-large-size); padding: 0 4px; background: var(--md-comp-badge-large-color);   /* [D] */
+  color: var(--md-comp-badge-large-label-text-color); font: var(--md-comp-badge-large-label-text-type); text-align: center; }
+
+/* ── 검색 바 [A] ── */
+.m3-search-bar { position: relative; display: flex; align-items: center; gap: 0; height: var(--md-comp-search-bar-container-height); padding: 0 4px 0 16px;   /* 앞 16 [A-db search-bar.leading-space], 뒤 아이콘 버튼 쪽 4·사이 0 [A-db search-bar.contained.trailing-actions] */
+  border-radius: var(--md-comp-search-bar-container-shape); background: var(--md-comp-search-bar-container-color); }
+.m3-search-bar > md-icon { margin-right: 16px; color: var(--md-comp-search-bar-leading-icon-color); }   /* [D] */
+.m3-search-bar input { flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: none; color: var(--md-comp-search-bar-input-text-color); font: var(--md-comp-search-bar-input-text-type); }
+.m3-search-bar input::placeholder { color: var(--md-comp-search-bar-supporting-text-color); }
+.m3-search-bar:focus-within { outline: 2px solid var(--md-sys-color-secondary); outline-offset: 2px; }   /* md-focus-ring 대신 [D] */
+
+/* ── 일반 툴팁 [A]: 아이콘 버튼처럼 이름이 보이지 않는 요소에만 ── */
+.m3-tooltip-anchor { position: relative; display: inline-flex; }
+.m3-tooltip { position: absolute; left: 50%; top: calc(100% + 4px); z-index: 60; transform: translateX(-50%); white-space: nowrap; pointer-events: none;   /* [D] */
+  min-height: 24px; box-sizing: border-box; padding: 4px 8px; border-radius: var(--md-comp-plain-tooltip-container-shape);                     /* [D] */
+  background: var(--md-comp-plain-tooltip-container-color); color: var(--md-comp-plain-tooltip-supporting-text-color); font: var(--md-comp-plain-tooltip-supporting-text-type);
+  opacity: 0; transition: opacity var(--md-sys-motion-duration-short4) linear; }
+.m3-tooltip-anchor:hover .m3-tooltip, .m3-tooltip-anchor:focus-within .m3-tooltip { opacity: 1; transition-delay: 500ms; }   /* 지연 [D] */
+
+/* ── 분할 버튼(세그먼트) [A] ── */
+.m3-segmented { display: inline-flex; height: var(--md-comp-outlined-segmented-button-container-height); }
+.m3-segmented button { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 48px; padding: 0 12px;   /* [D] */
+  border: var(--md-comp-outlined-segmented-button-outline-width) solid var(--md-comp-outlined-segmented-button-outline-color); margin-left: calc(-1 * var(--md-comp-outlined-segmented-button-outline-width));
+  background: none; color: var(--md-comp-outlined-segmented-button-unselected-label-text-color); font: var(--md-comp-outlined-segmented-button-label-text-type); cursor: pointer; }
+.m3-segmented button:first-child { margin-left: 0; border-radius: var(--md-comp-outlined-segmented-button-shape) 0 0 var(--md-comp-outlined-segmented-button-shape); padding-left: 16px; }   /* [D] */
+.m3-segmented button:last-child { border-radius: 0 var(--md-comp-outlined-segmented-button-shape) var(--md-comp-outlined-segmented-button-shape) 0; padding-right: 16px; }
+.m3-segmented button[aria-pressed="true"] { background: var(--md-comp-outlined-segmented-button-selected-container-color); color: var(--md-comp-outlined-segmented-button-selected-label-text-color); }
+.m3-segmented button[aria-pressed="true"]::before { content: "check"; font-family: var(--md-icon-font, "Material Symbols Outlined"); font-size: var(--md-comp-outlined-segmented-button-with-icon-icon-size); line-height: 1; }   /* 선택 표시 [A] */
+.m3-segmented button md-focus-ring { --md-focus-ring-shape: inherit; }
+
+/* ── 화면 FAB 위치: <md-fab class="m3-fab-fixed"> ── */
+.m3-fab-fixed { position: fixed; right: 16px; bottom: 16px; z-index: 15; }   /* compact 16 [D] */
+@media (min-width: 600px) { .m3-fab-fixed { right: 24px; bottom: 24px; } }   /* medium 이상 24, 바깥 여백과 같게 [D] */
+@media (max-width: 599px) { .has-navigation-bar .m3-fab-fixed { bottom: calc(var(--md-comp-navigation-bar-container-height) + 16px); } }   /* 내비 바 위 [D] */
+/* 스낵바는 FAB를 가리지 않게 위로 민다 [A-doc 스낵바] */
+.has-fab .m3-snackbar { bottom: calc(56px + 32px); }
+@media (max-width: 599px) { .has-fab.has-navigation-bar .m3-snackbar { bottom: calc(var(--md-comp-navigation-bar-container-height) + 56px + 32px); } }
+
+/* ── 상태 표시 (Material에 없음 [D]). 색 역할 짝만 쓴다. tertiary는 기준 색에서 분홍이라 상태 뜻으로 쓰지 않는다 ── */
+.m3-status { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: var(--md-sys-shape-corner-small); font: var(--md-sys-typescale-label-medium); white-space: nowrap; }
+.m3-status.neutral { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); }   /* 대기, 초안 */
+.m3-status.active { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }        /* 진행 중 */
+.m3-status.done { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }      /* 완료 */
+.m3-status.error { background: var(--md-sys-color-error-container); color: var(--md-sys-color-on-error-container); }             /* 지연, 실패 */
+
+/* ── 설정 행: 글 + 오른쪽 컨트롤(스위치 등) [D] ── */
+.m3-setting-row { display: flex; align-items: center; gap: 16px; min-height: 72px; padding: 8px 0; border-bottom: 1px solid var(--md-sys-color-outline-variant); }
+.m3-setting-row:last-child { border-bottom: 0; }
+.m3-setting-row .text { flex: 1; min-width: 0; }
+.m3-setting-row .title { margin: 0; font: var(--md-sys-typescale-body-large); letter-spacing: var(--md-sys-typescale-body-large-tracking); }
+.m3-setting-row .sub { margin: 2px 0 0; color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-body-medium); }
+
+/* ── 표 (Material Web에 없음. 목록 색과 글자를 따른다 [D]) ── */
+.m3-table-wrap { overflow-x: auto; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-corner-medium); }
+.m3-table { width: 100%; border-collapse: collapse; font: var(--md-sys-typescale-body-medium); }
+.m3-table th { height: 56px; padding: 0 16px; text-align: left; color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-title-small); border-bottom: 1px solid var(--md-sys-color-outline-variant); }   /* [D] */
+.m3-table td { height: 52px; padding: 0 16px; border-bottom: 1px solid var(--md-sys-color-outline-variant); }   /* [D] */
+.m3-table tr:last-child td { border-bottom: 0; }
+.m3-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── 화면 틀: 창 크기 구간 [A-doc] compact <600, medium 600~839, expanded 840~1199, large 1200~1599, extra-large ≥1600 ── */
+.m3-app { display: flex; min-height: 100vh; }
+.m3-app > main { flex: 1; min-width: 0; }
+.m3-pane { box-sizing: border-box; padding: 0 16px; }                                 /* compact 여백 16 [A-doc] */
+@media (min-width: 600px) { .m3-pane { padding: 0 24px; } }                          /* medium 이상 여백 24 [A-doc] */
+.m3-panes { display: grid; gap: 24px; }                                              /* 창 사이 간격 24 [A-doc] */
+@media (min-width: 840px) { .m3-panes.list-detail { grid-template-columns: 360px 1fr; } }    /* 고정 창 360 [A-doc] */
+@media (min-width: 1200px) { .m3-panes.list-detail { grid-template-columns: 412px 1fr; } }   /* 고정 창 412 [A-doc] */
+/* 구간별 내비 바꾸기 [A-doc]: compact = 내비 바, medium = 레일, expanded 이상 = 레일 또는 서랍 */
+.m3-show-compact { display: none !important; }
+@media (max-width: 599px) { .m3-hide-compact { display: none !important; } .m3-show-compact { display: flex !important; } body.has-navigation-bar { padding-bottom: var(--md-comp-navigation-bar-container-height); } }
+@media (max-width: 1199px) { .m3-show-large { display: none !important; } }
+@media (min-width: 1200px) { .m3-hide-large { display: none !important; } }
+
+/* 움직임 줄이기 */
+@media (prefers-reduced-motion: reduce) { .m3-snackbar, .m3-tooltip, .m3-top-app-bar { transition: none; } }

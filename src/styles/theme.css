@@ -1,0 +1,187 @@
+/* make-theme.mjs #6750A4 monochrome contrast=0. 공식 material-color-utilities로 계산 [A 도구] */
+:root {
+  --md-sys-color-background: #f9f9f9;
+  --md-sys-color-on-background: #1b1b1b;
+  --md-sys-color-surface: #f9f9f9;
+  --md-sys-color-surface-dim: #dadada;
+  --md-sys-color-surface-bright: #f9f9f9;
+  --md-sys-color-surface-container-lowest: #ffffff;
+  --md-sys-color-surface-container-low: #f3f3f3;
+  --md-sys-color-surface-container: #eeeeee;
+  --md-sys-color-surface-container-high: #e8e8e8;
+  --md-sys-color-surface-container-highest: #e2e2e2;
+  --md-sys-color-on-surface: #1b1b1b;
+  --md-sys-color-surface-variant: #e2e2e2;
+  --md-sys-color-on-surface-variant: #474747;
+  --md-sys-color-inverse-surface: #303030;
+  --md-sys-color-inverse-on-surface: #f1f1f1;
+  --md-sys-color-outline: #777777;
+  --md-sys-color-outline-variant: #c6c6c6;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-surface-tint: #5e5e5e;
+  --md-sys-color-primary: #000000;
+  --md-sys-color-on-primary: #e2e2e2;
+  --md-sys-color-primary-container: #3b3b3b;
+  --md-sys-color-on-primary-container: #ffffff;
+  --md-sys-color-inverse-primary: #c6c6c6;
+  --md-sys-color-secondary: #5e5e5e;
+  --md-sys-color-on-secondary: #ffffff;
+  --md-sys-color-secondary-container: #d4d4d4;
+  --md-sys-color-on-secondary-container: #1b1b1b;
+  --md-sys-color-tertiary: #3b3b3b;
+  --md-sys-color-on-tertiary: #e2e2e2;
+  --md-sys-color-tertiary-container: #747474;
+  --md-sys-color-on-tertiary-container: #ffffff;
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
+  --md-sys-color-primary-fixed: #5e5e5e;
+  --md-sys-color-primary-fixed-dim: #474747;
+  --md-sys-color-on-primary-fixed: #ffffff;
+  --md-sys-color-on-primary-fixed-variant: #e2e2e2;
+  --md-sys-color-secondary-fixed: #c6c6c6;
+  --md-sys-color-secondary-fixed-dim: #ababab;
+  --md-sys-color-on-secondary-fixed: #1b1b1b;
+  --md-sys-color-on-secondary-fixed-variant: #3b3b3b;
+  --md-sys-color-tertiary-fixed: #5e5e5e;
+  --md-sys-color-tertiary-fixed-dim: #474747;
+  --md-sys-color-on-tertiary-fixed: #ffffff;
+  --md-sys-color-on-tertiary-fixed-variant: #e2e2e2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --md-sys-color-background: #131313;
+    --md-sys-color-on-background: #e2e2e2;
+    --md-sys-color-surface: #131313;
+    --md-sys-color-surface-dim: #131313;
+    --md-sys-color-surface-bright: #393939;
+    --md-sys-color-surface-container-lowest: #0e0e0e;
+    --md-sys-color-surface-container-low: #1b1b1b;
+    --md-sys-color-surface-container: #1f1f1f;
+    --md-sys-color-surface-container-high: #2a2a2a;
+    --md-sys-color-surface-container-highest: #353535;
+    --md-sys-color-on-surface: #e2e2e2;
+    --md-sys-color-surface-variant: #474747;
+    --md-sys-color-on-surface-variant: #c6c6c6;
+    --md-sys-color-inverse-surface: #e2e2e2;
+    --md-sys-color-inverse-on-surface: #303030;
+    --md-sys-color-outline: #919191;
+    --md-sys-color-outline-variant: #474747;
+    --md-sys-color-shadow: #000000;
+    --md-sys-color-scrim: #000000;
+    --md-sys-color-surface-tint: #c6c6c6;
+    --md-sys-color-primary: #ffffff;
+    --md-sys-color-on-primary: #1b1b1b;
+    --md-sys-color-primary-container: #d4d4d4;
+    --md-sys-color-on-primary-container: #000000;
+    --md-sys-color-inverse-primary: #5e5e5e;
+    --md-sys-color-secondary: #c6c6c6;
+    --md-sys-color-on-secondary: #1b1b1b;
+    --md-sys-color-secondary-container: #474747;
+    --md-sys-color-on-secondary-container: #e2e2e2;
+    --md-sys-color-tertiary: #e2e2e2;
+    --md-sys-color-on-tertiary: #1b1b1b;
+    --md-sys-color-tertiary-container: #919191;
+    --md-sys-color-on-tertiary-container: #000000;
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    --md-sys-color-error-container: #93000a;
+    --md-sys-color-on-error-container: #ffdad6;
+    --md-sys-color-primary-fixed: #5e5e5e;
+    --md-sys-color-primary-fixed-dim: #474747;
+    --md-sys-color-on-primary-fixed: #ffffff;
+    --md-sys-color-on-primary-fixed-variant: #e2e2e2;
+    --md-sys-color-secondary-fixed: #c6c6c6;
+    --md-sys-color-secondary-fixed-dim: #ababab;
+    --md-sys-color-on-secondary-fixed: #1b1b1b;
+    --md-sys-color-on-secondary-fixed-variant: #3b3b3b;
+    --md-sys-color-tertiary-fixed: #5e5e5e;
+    --md-sys-color-tertiary-fixed-dim: #474747;
+    --md-sys-color-on-tertiary-fixed: #ffffff;
+    --md-sys-color-on-tertiary-fixed-variant: #e2e2e2;
+  }
+}
+:root[data-theme="dark"] {
+  --md-sys-color-background: #131313;
+  --md-sys-color-on-background: #e2e2e2;
+  --md-sys-color-surface: #131313;
+  --md-sys-color-surface-dim: #131313;
+  --md-sys-color-surface-bright: #393939;
+  --md-sys-color-surface-container-lowest: #0e0e0e;
+  --md-sys-color-surface-container-low: #1b1b1b;
+  --md-sys-color-surface-container: #1f1f1f;
+  --md-sys-color-surface-container-high: #2a2a2a;
+  --md-sys-color-surface-container-highest: #353535;
+  --md-sys-color-on-surface: #e2e2e2;
+  --md-sys-color-surface-variant: #474747;
+  --md-sys-color-on-surface-variant: #c6c6c6;
+  --md-sys-color-inverse-surface: #e2e2e2;
+  --md-sys-color-inverse-on-surface: #303030;
+  --md-sys-color-outline: #919191;
+  --md-sys-color-outline-variant: #474747;
+  --md-sys-color-shadow: #000000;
+  --md-sys-color-scrim: #000000;
+  --md-sys-color-surface-tint: #c6c6c6;
+  --md-sys-color-primary: #ffffff;
+  --md-sys-color-on-primary: #1b1b1b;
+  --md-sys-color-primary-container: #d4d4d4;
+  --md-sys-color-on-primary-container: #000000;
+  --md-sys-color-inverse-primary: #5e5e5e;
+  --md-sys-color-secondary: #c6c6c6;
+  --md-sys-color-on-secondary: #1b1b1b;
+  --md-sys-color-secondary-container: #474747;
+  --md-sys-color-on-secondary-container: #e2e2e2;
+  --md-sys-color-tertiary: #e2e2e2;
+  --md-sys-color-on-tertiary: #1b1b1b;
+  --md-sys-color-tertiary-container: #919191;
+  --md-sys-color-on-tertiary-container: #000000;
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+  --md-sys-color-primary-fixed: #5e5e5e;
+  --md-sys-color-primary-fixed-dim: #474747;
+  --md-sys-color-on-primary-fixed: #ffffff;
+  --md-sys-color-on-primary-fixed-variant: #e2e2e2;
+  --md-sys-color-secondary-fixed: #c6c6c6;
+  --md-sys-color-secondary-fixed-dim: #ababab;
+  --md-sys-color-on-secondary-fixed: #1b1b1b;
+  --md-sys-color-on-secondary-fixed-variant: #3b3b3b;
+  --md-sys-color-tertiary-fixed: #5e5e5e;
+  --md-sys-color-tertiary-fixed-dim: #474747;
+  --md-sys-color-on-tertiary-fixed: #ffffff;
+  --md-sys-color-on-tertiary-fixed-variant: #e2e2e2;
+}
+
+/* ── 강조색 하나 ──
+   위 블록은 make-theme.mjs "#6750A4" monochrome 0 결과(흑백 바탕)이고, 여기서 강조색 역할만 덮어쓴다.
+   최종 색이 정해지기 전까지 Material 기준 보라(#6750A4)의 tonal-spot 계산값을 임시로 쓴다.
+   색을 바꿀 때: make-theme.mjs "#새색" tonal-spot 0 결과에서 아래 값만 옮기고 contrast.mjs로 검사한다. */
+:root {
+  --md-sys-color-primary: #65558f;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #e9ddff;
+  --md-sys-color-on-primary-container: #4d3d75;
+  --md-sys-color-inverse-primary: #cfbdfe;
+  --md-sys-color-surface-tint: #65558f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --md-sys-color-primary: #cfbdfe;
+    --md-sys-color-on-primary: #36275d;
+    --md-sys-color-primary-container: #4d3d75;
+    --md-sys-color-on-primary-container: #e9ddff;
+    --md-sys-color-inverse-primary: #65558f;
+    --md-sys-color-surface-tint: #cfbdfe;
+  }
+}
+:root[data-theme="dark"] {
+  --md-sys-color-primary: #cfbdfe;
+  --md-sys-color-on-primary: #36275d;
+  --md-sys-color-primary-container: #4d3d75;
+  --md-sys-color-on-primary-container: #e9ddff;
+  --md-sys-color-inverse-primary: #65558f;
+  --md-sys-color-surface-tint: #cfbdfe;
+}

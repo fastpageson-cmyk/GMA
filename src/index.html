@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>닿음 · 나도 받을 수 있는 지금 열린 혜택</title>
+<link rel="icon" href="data:,">
+<meta name="description" content="로그인 없이 1분 안에 내가 받을 수 있는 지금 열린 청년 혜택과 금액을 확인해요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="닿음">
+<meta property="og:title" content="닿음 · 나도 받을 수 있는 지금 열린 혜택">
+<meta property="og:description" content="로그인 없이 1분 안에 내가 받을 수 있는 지금 열린 청년 혜택과 금액을 확인해요.">
+<meta property="og:image" content="og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="닿음. 나도 받을 수 있는 지금 열린 혜택">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block">
+<script type="importmap">{ "imports": { "@material/web/": "https://esm.run/@material/web@2.5.0/" } }</script>
+<script type="module">
+  import '@material/web/all.js';
+  import { styles as typescaleStyles } from '@material/web/typography/md-typescale-styles.js';
+  document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+</script>
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/component-tokens.css">
+<link rel="stylesheet" href="styles/google.css">
+<link rel="stylesheet" href="styles/theme.css">
+<link rel="stylesheet" href="styles/app.css">
+<script src="js/m3-behaviors.js" defer></script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#view">본문으로 건너뛰기</a>
+<header class="m3-top-app-bar site-bar">
+  <a class="headline brand m3-interactive" href="#/"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>닿음</a>
+  <nav class="top-nav" aria-label="주 메뉴">
+    <a class="top-link m3-interactive" href="#/check" data-nav="find"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>혜택 찾기</a>
+    <a class="top-link m3-interactive" href="#/ask" data-nav="ask"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>질문하기</a>
+  </nav>
+  <div class="trailing">
+    <a class="top-link m3-interactive alert-link" href="#/alert" data-nav="alert"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><md-icon aria-hidden="true">notifications</md-icon><span>내 알림</span></a>
+    <md-icon-button class="menu-button" aria-label="메뉴 열기" data-open="#nav-drawer"><md-icon aria-hidden="true">menu</md-icon></md-icon-button>
+  </div>
+</header>
+<dialog class="m3-navigation-drawer modal" id="nav-drawer" aria-label="주 메뉴">
+  <p class="headline">닿음</p>
+  <a class="m3-interactive" href="#/" data-nav="home"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><md-icon aria-hidden="true">home</md-icon>홈</a>
+  <a class="m3-interactive" href="#/check" data-nav="find"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><md-icon aria-hidden="true">search</md-icon>혜택 찾기</a>
+  <a class="m3-interactive" href="#/ask" data-nav="ask"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><md-icon aria-hidden="true">send</md-icon>질문하기</a>
+  <a class="m3-interactive" href="#/alert" data-nav="alert"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><md-icon aria-hidden="true">notifications</md-icon>내 알림</a>
+</dialog>
+<main class="m3-pane page" id="view" tabindex="-1"><p class="empty" role="status">불러오는 중이에요</p></main>
+<footer class="site-footer m3-pane">
+  <p>닿음은 GMA 용인 지역 혁신 프로젝트의 시제품이에요. 혜택 정보는 신청 전에 원문 공고로 꼭 다시 확인해 주세요.</p>
+</footer>
+</body>
+</html>
