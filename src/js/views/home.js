@@ -6,9 +6,24 @@ import { esc, icon } from '../ui.js';
 // 출처를 확인해 바꿀 때는 이 한 줄만 고치면 된다 (보도 기준 2026년 중앙정부 청년정책 예산은 약 30조 원).
 const YOUTH_SUPPORT_TOTAL = '120조';
 
-// 물결 한 주기(600)를 두 번 이어 그려, 절반만큼 옮기면 처음 모양과 이어진다
-const WAVE = 'M0 14 Q150 0 300 14 T600 14 T900 14 T1200 14 V48 H0 Z';
-const wave = (cls) => `<svg class="wave ${cls}" viewBox="0 0 1200 48" preserveAspectRatio="none" aria-hidden="true"><path d="${WAVE}"/></svg>`;
+// 돼지 저금통 모양 (Material Symbols 'savings', 채운 모양과 테두리). 채운 모양으로 물을 잘라 저금통 안에 담는다
+const PIG_FILL = 'M668.5-531.5Q680-543 680-560t-11.5-28.5Q657-600 640-600t-28.5 11.5Q600-577 600-560t11.5 28.5Q623-520 640-520t28.5-11.5ZM320-620h200v-60H320v60ZM180-120q-34-114-67-227.5T80-580q0-92 64-156t156-64h200q29-38 70.5-59t89.5-21q25 0 42.5 17.5T720-820q0 5-5 23-4 11-7.5 22.5T702-751l91 91h87v279l-113 37-67 224H480v-80h-80v80H180Z';
+const PIG_LINE = 'M668.5-531.5Q680-543 680-560t-11.5-28.5Q657-600 640-600t-28.5 11.5Q600-577 600-560t11.5 28.5Q623-520 640-520t28.5-11.5ZM320-620h200v-60H320v60ZM180-120q-34-114-67-227.5T80-580q0-92 64-156t156-64h200q29-38 70.5-59t89.5-21q25 0 42.5 17.5T720-820q0 6-1.5 12t-3.5 11q-4 11-7.5 22.5T702-751l91 91h87v279l-113 37-67 224H480v-80h-80v80H180Zm45-60h115v-80h200v80h115l63-210 102-35v-175h-52L640-728q1-25 6.5-48.5T658-824q-38 10-72 29.5T534-740H300q-66.29 0-113.14 46.86Q140-646.29 140-580q0 103.16 29 201.58Q198-280 225-180Z';
+// 물결 한 주기 480을 네 번 이어 그려(폭 1920), 절반(960)만큼 옮기면 처음 모양과 이어진다
+const wavePath = (y, h) => `M0 ${y} Q120 ${y - h} 240 ${y} T480 ${y} T720 ${y} T960 ${y} T1200 ${y} T1440 ${y} T1680 ${y} T1920 ${y} V0 H0 Z`;
+
+const piggy = () => `<svg class="piggy" viewBox="0 -960 960 960" aria-hidden="true">
+  <defs><clipPath id="pig-clip"><path d="${PIG_FILL}"/></clipPath></defs>
+  <g clip-path="url(#pig-clip)">
+    <rect class="pig-empty" x="0" y="-960" width="960" height="960"/>
+    <path class="pig-wave back" d="${wavePath(-450, 46)}"/>
+    <path class="pig-wave front" d="${wavePath(-420, 36)}"/>
+  </g>
+  <path class="pig-line" d="${PIG_LINE}"/>
+</svg>`;
+
+// 문장을 타고 흘러내리는 물줄기. 위치(--x)와 늦춤(--d)을 달리해 줄줄 흐르게 한다
+const RUNOFF = [[8, 0.2], [21, 1.1], [33, 0.6], [47, 1.6], [58, 0.1], [71, 0.9], [84, 1.4], [93, 0.5]];
 
 export function home(root) {
   root.innerHTML = `
@@ -36,9 +51,14 @@ export function home(root) {
 
     <section class="section missed" aria-labelledby="missed-title">
       <h2 class="section-title" id="missed-title">내가 지금 놓치는 금액은?</h2>
-      <md-icon class="piggy" aria-hidden="true">savings</md-icon>
-      <div class="water" aria-hidden="true">${wave('back')}${wave('front')}</div>
-      <p class="missed-total">지금 청년 정책 지원금 <strong>${YOUTH_SUPPORT_TOTAL}</strong></p>
+      <div class="pig-scene">
+        ${piggy()}
+        <div class="pour" aria-hidden="true"><span class="stream"></span><i></i><i></i><i></i></div>
+      </div>
+      <div class="wet-block">
+        <p class="missed-total">청년 정책 지원금 <strong>${YOUTH_SUPPORT_TOTAL}</strong></p>
+        <div class="runoff" aria-hidden="true">${RUNOFF.map(([x, d]) => `<i style="--x:${x}%;--d:${d}s"></i>`).join('')}</div>
+      </div>
     </section>`;
 
   root.querySelector('#home-ask').addEventListener('submit', (e) => {

@@ -155,33 +155,68 @@
   --md-sys-color-on-tertiary-fixed-variant: #e2e2e2;
 }
 
-/* ── 강조색 하나 ──
+/* ── 강조색: 초록 주색 + 분홍 포인트 ──
+   팔레트 https://colorhunt.co/palette/59ac773a6f43fdaaaaffd5d5 (#59AC77 #3A6F43 #FDAAAA #FFD5D5).
    위 블록은 make-theme.mjs "#6750A4" monochrome 0 결과(흑백 바탕)이고, 여기서 강조색 역할만 덮어쓴다.
-   최종 색이 정해지기 전까지 Material 기준 보라(#6750A4)의 tonal-spot 계산값을 임시로 쓴다.
-   색을 바꿀 때: make-theme.mjs "#새색" tonal-spot 0 결과에서 아래 값만 옮기고 contrast.mjs로 검사한다. */
+   primary는 팔레트 진초록 #3A6F43(흰 글자 대비 5.9), 나머지 톤은 material-color-utilities 0.3.0
+   TonalPalette(#3A6F43 hue 150.8·chroma 36.4, 분홍 #FDAAAA hue 18·chroma 40)에서 뽑았다.
+   tertiary-container는 팔레트 연분홍 #FFD5D5를 그대로 쓴다. */
 :root {
-  --md-sys-color-primary: #65558f;
+  --md-sys-color-primary: #3a6f43;
   --md-sys-color-on-primary: #ffffff;
-  --md-sys-color-primary-container: #e9ddff;
-  --md-sys-color-on-primary-container: #4d3d75;
-  --md-sys-color-inverse-primary: #cfbdfe;
-  --md-sys-color-surface-tint: #65558f;
+  --md-sys-color-primary-container: #b6f1ba;
+  --md-sys-color-on-primary-container: #002109;
+  --md-sys-color-inverse-primary: #9bd49f;
+  --md-sys-color-surface-tint: #3a6f43;
+  --md-sys-color-secondary-container: #d9e6d5;
+  --md-sys-color-on-secondary-container: #131e14;
+  --md-sys-color-tertiary: #944749;
+  --md-sys-color-on-tertiary: #ffffff;
+  --md-sys-color-tertiary-container: #ffd5d5;
+  --md-sys-color-on-tertiary-container: #3d050b;
+  --app-water: #59ac77;          /* 팔레트 초록. 물·장식용(글자 대비 2.8이라 글자에는 primary) */
+  --app-accent: #fdaaaa;         /* 팔레트 분홍. 장식용 포인트 */
+  --app-accent-soft: #ffd5d5;    /* 팔레트 연분홍 */
+  --app-accent-strong: #b25f60;  /* 분홍 tone 50. 큰 글자·아이콘 포인트 (밝은 바탕 대비 4.2) */
+  --app-accent-line: #d07779;    /* 분홍 tone 60. 돼지 저금통 테두리(장식) */
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --md-sys-color-primary: #cfbdfe;
-    --md-sys-color-on-primary: #36275d;
-    --md-sys-color-primary-container: #4d3d75;
-    --md-sys-color-on-primary-container: #e9ddff;
-    --md-sys-color-inverse-primary: #65558f;
-    --md-sys-color-surface-tint: #cfbdfe;
+    --md-sys-color-primary: #9bd49f;
+    --md-sys-color-on-primary: #003914;
+    --md-sys-color-primary-container: #1b5128;
+    --md-sys-color-on-primary-container: #b6f1ba;
+    --md-sys-color-inverse-primary: #3a6f43;
+    --md-sys-color-surface-tint: #9bd49f;
+    --md-sys-color-secondary-container: #3e4a3d;
+    --md-sys-color-on-secondary-container: #d9e6d5;
+    --md-sys-color-tertiary: #ffb3b3;
+    --md-sys-color-on-tertiary: #5a1a1e;
+    --md-sys-color-tertiary-container: #763033;
+    --md-sys-color-on-tertiary-container: #ffdad9;
+    --app-water: #59ac77;
+    --app-accent: #fdaaaa;
+    --app-accent-soft: #763033;
+    --app-accent-strong: #ffb3b3;
+    --app-accent-line: #ffb3b3;
   }
 }
 :root[data-theme="dark"] {
-  --md-sys-color-primary: #cfbdfe;
-  --md-sys-color-on-primary: #36275d;
-  --md-sys-color-primary-container: #4d3d75;
-  --md-sys-color-on-primary-container: #e9ddff;
-  --md-sys-color-inverse-primary: #65558f;
-  --md-sys-color-surface-tint: #cfbdfe;
+  --md-sys-color-primary: #9bd49f;
+  --md-sys-color-on-primary: #003914;
+  --md-sys-color-primary-container: #1b5128;
+  --md-sys-color-on-primary-container: #b6f1ba;
+  --md-sys-color-inverse-primary: #3a6f43;
+  --md-sys-color-surface-tint: #9bd49f;
+  --md-sys-color-secondary-container: #3e4a3d;
+  --md-sys-color-on-secondary-container: #d9e6d5;
+  --md-sys-color-tertiary: #ffb3b3;
+  --md-sys-color-on-tertiary: #5a1a1e;
+  --md-sys-color-tertiary-container: #763033;
+  --md-sys-color-on-tertiary-container: #ffdad9;
+  --app-water: #59ac77;
+  --app-accent: #fdaaaa;
+  --app-accent-soft: #763033;
+  --app-accent-strong: #ffb3b3;
+  --app-accent-line: #ffb3b3;
 }

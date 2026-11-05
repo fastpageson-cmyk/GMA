@@ -20,7 +20,7 @@ python3 -m http.server 5180 --directory src
 
 브라우저에서 http://localhost:5180 을 엽니다. 판정 시험은 `node --test tests/*.test.mjs`로 돌립니다.
 
-- 화면은 Material 3(`@material/web`)로 만들었고, 강조색은 최종 색이 정해지기 전까지 임시 보라입니다.
+- 화면은 Material 3(`@material/web`)로 만들었습니다. 색은 [팔레트](https://colorhunt.co/palette/59ac773a6f43fdaaaaffd5d5)의 초록(#3A6F43, #59AC77)이 주색, 분홍(#FDAAAA, #FFD5D5)이 포인트입니다. 값은 `src/styles/theme.css` 맨 아래에 있습니다.
 - 폰트(Google Sans, 한글은 Noto Sans KR, 아이콘은 Material Symbols)는 Google Fonts에서 받아 `src/fonts/`에 넣어 두었습니다. 다시 받으려면 `node src/fonts/download-fonts.mjs`를 실행합니다.
 - 혜택 데이터는 2026-11-04 기준 실제 공고 28건입니다. 조사 원본과 확인 못 한 항목은 `docs/data/`에 있습니다.
 - 커뮤니티(게시판, 정책 카드 댓글)는 시범 글이 `src/js/data/community-seed.js`에 있고, 새로 쓴 글·댓글과 투표, 알림은 서버가 없어 이 브라우저에만 저장됩니다. 문장 질의는 언어 모델 없이 사전과 규칙으로 돌아갑니다.
