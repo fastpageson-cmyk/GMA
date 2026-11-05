@@ -29,7 +29,18 @@ function parseHash() {
 
 let lastPath;
 
+// 뒤로 가기로 돌아오면 보던 자리로 간다. 위치는 주소 기록 칸마다 적어 둔다. 새 칸은 비어 있어 맨 위에서 시작한다
+history.scrollRestoration = 'manual';
+let scrollTimer;
+const rememberScroll = () => history.replaceState({ y: window.scrollY }, '');
+window.addEventListener('scroll', () => {
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(rememberScroll, 150);
+}, { passive: true });
+document.addEventListener('click', rememberScroll, true);
+
 function render() {
+  clearTimeout(scrollTimer);
   const { path, query } = parseHash();
   const route = ROUTES.find((r) => r.path.test(path)) ?? ROUTES[0];
   const params = route.path.exec(path)?.slice(1) ?? [];
@@ -48,7 +59,7 @@ function render() {
     else a.removeAttribute('aria-current');
   });
   document.querySelector('#nav-drawer')?.close();
-  window.scrollTo(0, 0);
+  window.scrollTo(0, history.state?.y ?? 0);
   fresh.querySelector('h1')?.focus({ preventScroll: true });
 }
 

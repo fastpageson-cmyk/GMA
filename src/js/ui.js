@@ -32,12 +32,18 @@ export function deadlineText(benefit) {
   return left === 0 ? '오늘 마감' : `D-${left}`;
 }
 
+export const outsideText = (place) => `${place} 혜택이에요. 사는 곳을 확인해 주세요`;
+
+/** 판정을 보여 주는 곳마다 붙는 안내. show가 거짓이면 판정이 없는 것이라 붙이지 않는다 */
+export const judgeNotice = (show) => (show ? `<p class="notice-line">${icon('info')}판정은 입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>` : '');
+
 /** 카드 한 줄: 온라인·서류 N개, 대상이 아니면 막은 조건. 남은 확인 수는 판정 상자가 맡고 조건 문장은 상세에서 본다 */
 function cardLine(benefit, result) {
   if (result.verdict === 'no' && result.failed[0]) return `안 맞는 조건: ${result.failed[0].label}`;
+  if (result.outside) return outsideText(result.outside);
   const method = { online: '온라인', visit: '방문', both: '온라인·방문' }[benefit.apply?.method];
   const docs = benefit.documents?.length;
-  return [method && `${method} 신청`, docs ? `서류 ${docs}개` : null, benefit.apply?.cost === 'copay' ? '자부담 있음' : null].filter(Boolean).join(' · ') || benefit.oneLine;
+  return [method && `${method} 신청`, docs ? `서류 ${docs}개` : null, benefit.apply?.cost === 'copay' ? '내 돈이 일부 들어요' : null].filter(Boolean).join(' · ') || benefit.oneLine;
 }
 
 export function benefitCard(benefit, profile, reason) {
@@ -200,6 +206,17 @@ export function readFields(root) {
   return root.querySelector('md-outlined-select[name="sigungu"]') ? { sigungu: undefined, ...filled } : filled;
 }
 
+/** 열린 혜택을 내 조건으로 본 한 줄 답. 목록 제목과 홈 설명이 같이 쓴다 */
+export function answerHeading(open, profile, scope = '') {
+  const count = (test) => open.filter((b) => test(judge(b, profile))).length;
+  if (!profile) return `지금 열린 ${scope}혜택 ${open.length}개`;
+  const eligible = count((r) => r.verdict === 'eligible');
+  if (eligible) return `지금 받을 수 있는 ${scope}혜택 ${eligible}개`;
+  const direct = count(onlyDirectLeft);
+  if (direct) return `입력한 조건이 맞는 ${scope}혜택 ${direct}개`;
+  return `지금 확인해 볼 ${scope}혜택 ${count((r) => r.verdict === 'check')}개`;
+}
+
 /** 받을 수 있음 → 직접 확인만 남음 → 그 밖의 확인 필요 순. 같은 단에서는 남은 확인이 적고 마감이 빠른 순 */
 export function rankBenefits(benefits, profile) {
   const tier = (r) => ({ eligible: 0, check: onlyDirectLeft(r) ? 1 : 2, unknown: 3, no: 4 })[r.verdict];
@@ -211,8 +228,13 @@ export function rankBenefits(benefits, profile) {
 }
 
 export const openBenefits = () => BENEFITS.filter((b) => effectiveStatus(b).status === 'open');
-/** 마감일이 정해진 열린 혜택을 마감 빠른 순으로 */
-export const closingSoon = (limit) => openBenefits().filter((b) => daysLeft(b) !== null).sort((a, b) => daysLeft(a) - daysLeft(b)).slice(0, limit);
+/** 내 조건으로 쓸 수 있는 혜택: 대상 아니거나 지역 밖인 것을 뺀다 */
+const usableFor = (b, profile) => {
+  const { verdict, outside } = judge(b, profile);
+  return verdict !== 'no' && !outside;
+};
+/** 마감일이 정해진 열린 혜택을 마감 빠른 순으로. 조건을 넣은 사람에게는 쓸 수 있는 것만 보인다 */
+export const closingSoon = (limit, profile) => openBenefits().filter((b) => daysLeft(b) !== null && usableFor(b, profile)).sort((a, b) => daysLeft(a) - daysLeft(b)).slice(0, limit);
 export const findBenefit = (id) => BENEFITS.find((b) => b.id === id);
 
 /** 마감 혜택의 대안: 같은 분야에서 지금 열린 것. 원래 혜택의 지역을 제외한 사업은 대안이 아니다 */
@@ -220,5 +242,5 @@ export function similarOpen(benefit, profile, limit = 3) {
   const regions = benefit.eligibility?.regions ?? [];
   const open = openBenefits().filter((b) => b.id !== benefit.id && b.category === benefit.category
     && !regions.some((r) => b.eligibility?.excludedRegions?.includes(r)));
-  return rankBenefits(open, profile).filter((b) => judge(b, profile).verdict !== 'no').slice(0, limit);
+  return rankBenefits(open, profile).filter((b) => usableFor(b, profile)).slice(0, limit);
 }

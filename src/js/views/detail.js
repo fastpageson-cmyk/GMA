@@ -1,9 +1,9 @@
 // 혜택 상세 (가장 중요한 화면). 금액 → 이름 → 결과 → 얼마·누구·언제까지 → 탭.
 // 마감된 혜택도 같은 틀을 쓴다. SNS 링크로 바로 들어와도 이 화면에서 끝낼 수 있어야 한다.
 import { categoryLabel } from '../data/lookups.js';
-import { cardGrid, checkField, checkFields, closingSoon, deadlineText, EMAIL_PATTERN, esc, findBenefit, fmtDate, focusCentered, icon, profileFields, readFields, similarOpen, VERDICTS, wireFields } from '../ui.js';
+import { cardGrid, checkField, checkFields, closingSoon, deadlineText, EMAIL_PATTERN, esc, findBenefit, fmtDate, focusCentered, fold, icon, judgeNotice, outsideText, profileFields, readFields, similarOpen, VERDICTS, wireFields } from '../ui.js';
 import { effectiveStatus, judge, missingFields, neededFields, STATUS_LABELS } from '../judge.js';
-import { addNextAlert, addReview, getAlert, getMyVote, getProfile, getReviews, getVotes, isSignedIn, saveProfile, signIn, vote } from '../store.js';
+import { addNextAlert, addReview, getAlert, getConfirmed, getMyVote, getProfile, getReviews, getVotes, isSignedIn, saveProfile, signIn, vote } from '../store.js';
 import { hasPersonalNumber } from '../search.js';
 
 const REASONS = [
@@ -17,13 +17,13 @@ const ALTERNATIVES = '대신 받을 수 있는 혜택 보기';
 const REVIEW_RESULTS = { selected: '선정됨', rejected: '탈락', pending: '신청 중' };
 const CLOSED_REASON = { period: '신청 기간이 끝났어요.', budget: '예산이 모두 소진돼 일찍 끝났어요.', other: '모집이 끝났어요.' };
 
-const conditionList = (title, items, cls, iconName) => (items.length ? `<div class="cond-block"><p class="cond-title">${title}</p><ul class="cond-list ${cls}">${items.map((c) => `<li>${icon(iconName)}<span>${esc(c.label)}</span></li>`).join('')}</ul></div>` : '');
+const conditionList = (title, items, cls, iconName) => (items.length ? `<div class="cond-block">${title ? `<p class="cond-title">${title}</p>` : ''}<ul class="cond-list ${cls}">${items.map((c) => `<li>${icon(iconName)}<span>${esc(c.label)}</span></li>`).join('')}</ul></div>` : '');
 
 /** 데이터로 판정 못 하는 조건은 본인이 직접 확인한다. 모두 체크하면 입력으로 확인된 것으로 본다 */
-function selfCheckList(result) {
+function selfCheckList(result, title = '직접 확인할 조건') {
   const items = [...result.unknown, ...result.met].filter((c) => c.key === 'other');
   if (!items.length) return '';
-  return `<div class="cond-block"><p class="cond-title">직접 확인할 조건</p>
+  return `<div class="cond-block"><p class="cond-title">${title}</p>
     ${items.map((c) => `<label class="check-row"><md-checkbox touch-target="wrapper" data-confirm="${esc(c.label)}"${c.result === 'met' ? ' checked' : ''}></md-checkbox><span>${esc(c.label)}</span></label>`).join('')}
   </div>`;
 }
@@ -34,28 +34,39 @@ const externalButton = (label, url, emphasis) => `<md-${emphasis}-button href="$
 
 const bandTitle = (verdict) => `${icon(VERDICTS[verdict].icon)}${VERDICTS[verdict].label}`;
 
-/** 띠 아래 행동. 대상이 아니면 신청 링크는 고정 버튼에서 내려와 여기에 남는다 */
+/** 띠 아래 행동은 글자 버튼만 둔다. 대상이 아니면 신청 링크가 고정 버튼에서 내려와 여기에 남고, 주 행동은 대안 버튼 하나다 */
 function bandActions(verdict, canEdit, noticeUrl) {
   const actions = [
-    verdict === 'no' && '<md-outlined-button data-tab-go="2">이 기준 때문에 못 받아요</md-outlined-button>',
     canEdit && '<md-text-button data-edit-conditions>조건 고치기</md-text-button>',
     verdict === 'no' && noticeUrl && externalButton('공고 직접 보기', noticeUrl, 'text'),
+    verdict === 'no' && '<md-text-button data-tab-go="2">이 기준 때문에 못 받아요</md-text-button>',
   ].filter(Boolean);
   return actions.length ? `<div class="band-actions">${actions.join('')}</div>` : '';
 }
 
-function verdictBand(result, canEdit, noticeUrl) {
+/** 끝난 조건은 한 줄로 접는다. 받을 수 있음이면 직접 확인 목록도 끝난 일이다. 체크하는 동안에는 다시 그리지 않으므로 칸이 접혀 사라지지 않는다 */
+function doneFold(result) {
+  const checks = result.verdict === 'eligible' ? selfCheckList(result, '직접 확인한 조건') : '';
+  const met = result.met.filter((c) => c.key !== 'other');
+  const count = checks ? result.met.length : met.length;
+  return fold(`맞은 조건 ${count}가지`, count && `${checks}${conditionList(checks ? '입력한 조건' : '', met, 'met', 'check')}`);
+}
+
+export function verdictBand(result, canEdit, noticeUrl) {
   const { verdict } = result;
   if (verdict === 'unknown') return '';
   return `<div class="band ${verdict}">
     <p class="band-title" role="status" tabindex="-1">${bandTitle(verdict)}</p>
+    ${result.outside ? `<p>${esc(outsideText(result.outside))}.</p>` : ''}
     ${conditionList('안 맞는 조건', result.failed, 'failed', 'close')}
     ${conditionList('입력이 더 필요한 조건', result.unknown.filter((c) => c.key !== 'other' && c.key !== 'residency'), 'unknown', 'help')}
     ${conditionList('공고에서 확인할 조건', result.unknown.filter((c) => c.key === 'residency'), 'unknown', 'help')}
-    ${verdict === 'no' ? '' : selfCheckList(result)}
-    ${conditionList('맞은 조건', result.met.filter((c) => c.key !== 'other'), 'met', 'check')}
-    <p class="band-note">입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>
-    ${bandActions(verdict, canEdit, noticeUrl)}
+    ${verdict === 'check' ? selfCheckList(result) : ''}
+    ${doneFold(result)}
+    <div class="band-foot">
+      <p class="band-note">입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>
+      ${bandActions(verdict, canEdit, noticeUrl)}
+    </div>
   </div>`;
 }
 
@@ -96,7 +107,7 @@ function infoPanel(b) {
         ${row('방법', method)}
         ${row('로그인 필요', yesNoUnknown(a.loginRequired, '필요해요', '없어요'))}
         ${row('걸리는 시간', a.minutes ? `약 ${a.minutes}분` : '확인 필요')}
-        ${row('내 돈', a.cost ? (a.cost === 'free' ? '무료' : '자부담 있음') : '확인 필요')}
+        ${row('내 돈', a.cost ? (a.cost === 'free' ? '무료' : '일부 들어요') : '확인 필요')}
       </dl>
     </section>
     <section class="info-section"><h2 class="info-title">준비할 서류</h2>
@@ -136,7 +147,7 @@ function reviewPanel(b) {
     <p class="notice-line">${icon('info')}후기는 참고용이에요. 조건은 공식 정보를 기준으로 봐 주세요.</p>
     ${reviewForm()}
     ${reviews.length
-      ? `<ul class="review-list">${reviews.map((r) => `<li class="review"><p class="review-head"><span class="review-tag">참고용</span><b>${REVIEW_RESULTS[r.result]}</b><span class="hint">${esc(r.date)}</span></p><p>${esc(r.text)}</p><md-text-button data-report>신고</md-text-button></li>`).join('')}</ul>`
+      ? `<ul class="review-list">${reviews.map((r) => `<li class="review" tabindex="-1"><p class="review-head"><span class="review-tag">참고용</span><b>${REVIEW_RESULTS[r.result]}</b><span class="hint">${esc(r.date)}</span></p><p>${esc(r.text)}</p><md-text-button data-report>신고</md-text-button></li>`).join('')}</ul>`
       : '<p class="empty">아직 후기가 없어요. 첫 후기를 남겨 주세요.</p>'}`;
 }
 
@@ -169,14 +180,7 @@ function quickFields(b, profile, verdict, editing) {
 }
 
 function quickCheck(profile, fields, editing) {
-  if (!fields.length) {
-    if (profile) return '';
-    return `<div class="side-card">
-      <h2 class="info-title">바로 자격 확인</h2>
-      <p>이 혜택은 고를 조건 없이 직접 확인할 조건만 있어요. 자격 체크를 마치면 여기서 하나씩 체크할 수 있어요.</p>
-      <md-filled-tonal-button href="#/check">30초 자격 체크</md-filled-tonal-button>
-    </div>`;
-  }
+  if (!fields.length) return '';
   return `<form class="side-card" id="quick-check" novalidate>
     <h2 class="info-title" tabindex="-1">${editing ? '조건 고치기' : '바로 자격 확인'}</h2>
     <p>${editing ? '바꿀 칸만 고치고 확인을 눌러 주세요.' : `이 혜택에 ${profile ? '더 ' : ''}필요한 ${fields.length}가지만 골라 주세요.`}</p>
@@ -189,7 +193,7 @@ function applyBox(b, status, verdict, needsCheck) {
   const a = b.apply ?? {};
   if (status === 'closed') return '<md-filled-button disabled>신청 마감</md-filled-button>';
   if (verdict === 'no') return `<md-filled-button href="#/list?all=1">${ALTERNATIVES}</md-filled-button>`;
-  if (status === 'upcoming') return '<md-filled-button disabled>아직 열리지 않았어요</md-filled-button>';
+  if (status === 'upcoming') return `<md-filled-button disabled>아직 열리지 않았어요</md-filled-button>${nextAlert(b)}`;
   const emphasis = needsCheck ? 'outlined' : 'filled';
   if (a.method === 'visit') return `${externalButton('방문 신청 안내 보기', a.url ?? b.originalUrl, emphasis)}<p class="hint">이 혜택은 온라인 신청이 없어요.</p>`;
   const url = a.url ?? b.originalUrl;
@@ -197,13 +201,13 @@ function applyBox(b, status, verdict, needsCheck) {
   return `${externalButton(a.url ? '신청 페이지로 바로 가기' : '원문 공고로 가기', url, emphasis)}<p class="hint">${note}</p>`;
 }
 
-const NEXT_ALERT_DONE = `<p class="info-title">${icon('check_circle')}다음 모집이 열리면 메일로 알려 드릴게요</p><p class="hint">시제품이라 실제 메일은 가지 않아요.</p>`;
+const nextAlertDone = (b) => `<p class="info-title" tabindex="-1">${icon('check_circle')}${effectiveStatus(b).status === 'upcoming' ? '열리면' : '다음 모집이 열리면'} 메일로 알려 드릴게요</p><p class="hint">시제품이라 실제 메일은 가지 않아요.</p>`;
 
 function nextAlert(b) {
   const saved = getAlert();
-  if (saved?.benefits?.includes(b.id)) return `<div class="next-alert">${NEXT_ALERT_DONE}</div>`;
+  if (saved?.benefits?.includes(b.id)) return `<div class="next-alert">${nextAlertDone(b)}</div>`;
   return `<form class="next-alert" id="next-alert" novalidate>
-      <h2 class="info-title">다음 모집 알림 받기</h2>
+      <h2 class="info-title">${effectiveStatus(b).status === 'upcoming' ? '열리면 알림 받기' : '다음 모집 알림 받기'}</h2>
       <p>로그인 없이 이메일만 있으면 돼요.</p>
       <div class="inline-form">
         <md-outlined-text-field name="email" type="email" label="이메일" no-asterisk value="${esc(saved?.email ?? '')}" pattern="${EMAIL_PATTERN}" required error-text="이메일을 확인해 주세요"></md-outlined-text-field>
@@ -221,40 +225,51 @@ function closedBlock(b, reason, profile) {
     </section>
     ${nextAlert(b)}
     <section class="section-tight"><h2 class="section-title">지금 열린 비슷한 혜택</h2>
-      ${similar.length ? cardGrid(similar, profile) : '<p>비슷한 혜택이 지금은 없어요.</p><div class="button-row panel-next"><md-outlined-button href="#/list?all=1">전체 혜택 보기</md-outlined-button></div>'}
+      ${similar.length ? `${cardGrid(similar, profile)}${judgeNotice(profile)}` : '<p>비슷한 혜택이 지금은 없어요.</p><div class="button-row panel-next"><md-outlined-button href="#/list?all=1">전체 혜택 보기</md-outlined-button></div>'}
     </section>`;
 }
 
-export function detail(root, { params, query }) {
+/** 온 곳으로 돌아간다. 앱 안에서 왔으면 기록을 되돌려 보던 자리까지 살린다 */
+function backTarget(from, profile) {
+  const inApp = { '/list': ['#/list', '혜택 목록'], '/ask': ['#/ask', '질문으로 돌아가기'], '/': ['#/', '홈'] };
+  const target = from?.startsWith('/b/') ? [`#${from}`, '이전 혜택'] : inApp[from];
+  if (target) return { href: target[0], label: target[1], viaHistory: true };
+  return profile ? { href: '#/list', label: '맞춤 혜택 목록' } : { href: '#/', label: '홈' };
+}
+
+export function detail(root, { params, query, from }) {
   const b = findBenefit(params[0]);
   if (!b) {
-    const soon = closingSoon(3);
+    const soon = closingSoon(3, getProfile());
     root.innerHTML = `<h1 class="page-title" tabindex="-1">찾는 혜택이 없어요</h1>
       <p class="page-sub">링크가 바뀌었거나 삭제된 혜택이에요.</p>
       <md-filled-button href="#/list">혜택 목록 보기</md-filled-button>
-      ${soon.length ? `<section class="section"><h2 class="section-title">곧 마감</h2>${cardGrid(soon, getProfile())}</section>` : ''}`;
+      ${soon.length ? `<section class="section"><h2 class="section-title">곧 마감</h2>${cardGrid(soon, getProfile())}${judgeNotice(getProfile())}</section>` : ''}`;
     return;
   }
 
   let tab = { info: 0, review: 1, reason: 2 }[query.tab] ?? 0;
   let editing = false;
 
+  // 입력칸이 없는 혜택은 조건을 입력하지 않아도 여기서 바로 체크한다
+  const inputOf = () => getProfile() ?? (neededFields(b).length ? null : { confirmed: getConfirmed() });
+
   const paint = () => {
-    const profile = getProfile();
     const { status, reason } = effectiveStatus(b);
     const closed = status === 'closed';
+    const profile = closed ? getProfile() : inputOf();
     const result = judge(b, profile);
     const fields = closed ? [] : quickFields(b, profile, result.verdict, editing);
     const needsCheck = fields.length > 0;
     const sticky = !closed && !needsCheck && (status === 'open' || result.verdict === 'no');
     const noticeUrl = status === 'open' ? b.apply?.url ?? b.originalUrl : null;
-    const back = profile ? ['#/list', '맞춤 혜택 목록'] : ['#/', '홈'];
+    const back = backTarget(from, getProfile());
 
     root.innerHTML = `
       <div class="detail-layout">
         <div class="detail-head">
-          <a class="back-link m3-interactive" href="${back[0]}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>${icon('arrow_back')}${back[1]}</a>
-          <p class="detail-meta"><span class="source-tag">${esc(b.sourceName)}</span><span>${esc(categoryLabel(b.category))}</span><span class="deadline">${esc(deadlineText(b))}</span></p>
+          <a class="back-link m3-interactive" href="${back.href}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>${icon('arrow_back')}${esc(back.label)}</a>
+          <p class="detail-meta"><span>${esc(b.sourceName)}</span><span>${esc(categoryLabel(b.category))}</span><span class="deadline">${esc(deadlineText(b))}</span></p>
           <p class="detail-amount${closed ? ' is-dim' : ''}">${esc(b.amount.text)}</p>
           <h1 class="detail-title" tabindex="-1">${esc(b.title)}</h1>
           <p class="detail-one">${esc(b.oneLine)}</p>
@@ -265,7 +280,7 @@ export function detail(root, { params, query }) {
           <div class="apply-box${sticky ? ' sticky' : ''}">${applyBox(b, status, result.verdict, needsCheck)}</div>
           <div class="side-actions">
             <md-text-button id="share">${icon('share', 'icon')}공유</md-text-button>
-            ${closed ? '' : `<md-text-button href="#/alert?benefit=${esc(b.id)}">${icon('notifications', 'icon')}알림 받기</md-text-button>`}
+            ${status !== 'open' || result.verdict === 'no' ? '' : `<md-text-button href="#/alert?benefit=${esc(b.id)}">${icon('notifications', 'icon')}알림 받기</md-text-button>`}
             <p class="hint share-note" id="share-note" role="status" hidden></p>
           </div>
         </aside>
@@ -286,10 +301,11 @@ export function detail(root, { params, query }) {
       </div>`;
 
     wireFields(root);
-    bind(result);
+    bind(back);
   };
 
-  const showTab = (index, scroll) => {
+  /** 패널을 다시 그리면 포커스가 사라지므로 focus로 받은 요소에 돌려준다 */
+  const showTab = (index, { scroll, focus } = {}) => {
     tab = index;
     const tabs = root.querySelector('#tabs');
     tabs.activeTabIndex = index;
@@ -297,6 +313,8 @@ export function detail(root, { params, query }) {
     wireFields(root.querySelector('#panel'));
     bindPanel();
     if (scroll) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const target = focus && root.querySelector(`#panel ${focus}`);
+    if (target) Promise.resolve(target.updateComplete).then(() => target.focus());
   };
 
   const bindPanel = () => {
@@ -304,7 +322,7 @@ export function detail(root, { params, query }) {
     panel.querySelectorAll('[data-sign-in]').forEach((btn) => btn.addEventListener('click', () => {
       signIn();
       window.M3.showSnackbar('시제품이라 실제 로그인 없이 넘어갔어요');
-      showTab(1);
+      showTab(1, { focus: 'md-filter-chip' });
     }));
     panel.querySelector('#review-form')?.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -323,26 +341,31 @@ export function detail(root, { params, query }) {
         return focusCentered(field);
       }
       addReview(b.id, { result: chip.dataset.value, text: field.value, date: fmtDate(new Date().toISOString().slice(0, 10)) });
-      showTab(1);
+      showTab(1, { focus: '.review' });
       window.M3.showSnackbar('후기를 올렸어요');
       return undefined;
     });
     panel.querySelectorAll('[data-report]').forEach((btn) => btn.addEventListener('click', () => window.M3.showSnackbar('신고를 받았어요')));
     panel.querySelectorAll('[data-reason]').forEach((btn) => btn.addEventListener('click', () => {
       vote(b.id, btn.dataset.reason);
-      showTab(2);
+      showTab(2, { focus: `[data-reason="${btn.dataset.reason}"]` });
       window.M3.showSnackbar('의견을 남겼어요');
     }));
   };
 
-  const bind = () => {
+  const bind = (back) => {
+    root.querySelector('.back-link').addEventListener('click', (e) => {
+      if (!back.viaHistory) return;
+      e.preventDefault();
+      history.back();
+    });
     root.querySelector('[data-edit-conditions]')?.addEventListener('click', () => {
       editing = true;
       paint();
       focusCentered(root.querySelector('#quick-check .info-title'));
     });
     root.querySelector('#tabs').addEventListener('change', (e) => showTab(e.target.activeTabIndex));
-    root.querySelectorAll('[data-tab-go]').forEach((btn) => btn.addEventListener('click', () => showTab(Number(btn.dataset.tabGo), true)));
+    root.querySelectorAll('[data-tab-go]').forEach((btn) => btn.addEventListener('click', () => showTab(Number(btn.dataset.tabGo), { scroll: true })));
     root.querySelector('#share').addEventListener('click', async () => {
       const url = location.href.split('?')[0];
       try {
@@ -378,12 +401,12 @@ export function detail(root, { params, query }) {
       return undefined;
     });
     root.querySelectorAll('[data-confirm]').forEach((box) => box.addEventListener('change', () => {
-      const profile = getProfile();
-      const mine = new Set(profile.confirmed?.[b.id] ?? []);
+      const confirmed = getConfirmed();
+      const mine = new Set(confirmed[b.id] ?? []);
       if (box.checked) mine.add(box.dataset.confirm); else mine.delete(box.dataset.confirm);
-      saveProfile({ confirmed: { ...profile.confirmed, [b.id]: [...mine] } });
+      saveProfile({ confirmed: { ...confirmed, [b.id]: [...mine] } });
       // 판정 글자와 띠 모양만 바꾼다. 체크칸을 다시 그리면 키보드 포커스를 잃는다
-      const { verdict } = judge(b, getProfile());
+      const { verdict } = judge(b, inputOf());
       const band = root.querySelector('.band');
       band.className = `band ${verdict}`;
       band.querySelector('.band-title').innerHTML = bandTitle(verdict);
@@ -393,7 +416,8 @@ export function detail(root, { params, query }) {
       const field = e.target.querySelector('md-outlined-text-field');
       if (!checkField(field)) return;
       addNextAlert(b.id, field.value);
-      e.target.innerHTML = NEXT_ALERT_DONE;
+      e.target.innerHTML = nextAlertDone(b);
+      e.target.querySelector('.info-title').focus();
     });
     bindPanel();
   };

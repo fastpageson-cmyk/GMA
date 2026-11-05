@@ -22,6 +22,24 @@ export function directHits(text, benefits) {
   return benefits.filter((b) => words.some((w) => haystack(b).includes(w)));
 }
 
+// 혜택 이름은 띄어쓰기·문장부호·괄호 설명을 빼고 비교한다
+const squash = (s) => String(s ?? '').toLowerCase().replace(/\(.*?\)/g, '').replace(/[\s·,.!?'"~-]/g, '');
+const NAME_MIN = 4; // '장학금'처럼 짧은 말은 분야로 찾고 이름으로 보지 않는다
+const PARTICLE = /[은는이가을를도요]$/;
+
+/** 문장에 혜택 이름이 들어 있거나 문장이 이름의 일부면 그 혜택을 고른다. 사전보다 먼저 본다 */
+export function namedBenefits(text, benefits) {
+  const whole = squash(text);
+  const words = text.split(/\s+/).map((w) => squash(w).replace(PARTICLE, '')).filter((w) => w.length >= NAME_MIN);
+  return benefits.filter((b) => {
+    const title = squash(b.title);
+    const official = squash(b.officialTitle);
+    return whole.includes(title) || whole.includes(official)
+      || (whole.length >= NAME_MIN && (title.includes(whole) || official.includes(whole)))
+      || words.some((w) => title.includes(w));
+  });
+}
+
 /** 문장에서 찾아야 할 낱말과 분야를 뽑아 혜택을 고른다. 넓은 연결어만 걸린 다른 분야 혜택은 넣지 않는다. */
 export function searchBenefits(text, benefits) {
   const hits = dictionaryHits(text);
@@ -96,11 +114,14 @@ const PERSONAL_NUMBER = [
   /\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?/,                                  // 3.8/4.5
   /\d[\d,.]*\s*(학점|점|억|천\s*만|백\s*만|(천|백|만)?\s*원)/,            // 300만 원, 3천만원, 4.3학점
   /[일이삼사오육칠팔구십백천](억|천만|백만|만\s*원)/,                      // 삼천만원
+  /\d(\.\d+)?\s*만점/,                                               // 4.3 만점
+  /\d+\s*(분위|등급)/,                                                // 3분위, 1등급
 ];
+const KOREAN_NUMBER = /[일이삼사오육칠팔구](천|백|점\s*[일이삼사오육칠팔구])/;   // 연봉 삼천, 학점 사점오
 
 /** 후기에 학점·소득 같은 개인 숫자가 있는지 본다. 낱말과 숫자가 한 문장에 있으면 순서와 상관없이 걸러낸다 */
 export function hasPersonalNumber(text) {
-  return text.split(/[!?\n]|\.(?=\s|$)/).some((s) => PERSONAL_NUMBER.some((re) => re.test(s)) || (PERSONAL_WORD.test(s) && /\d/.test(s)));
+  return text.split(/[!?\n]|\.(?=\s|$)/).some((s) => PERSONAL_NUMBER.some((re) => re.test(s)) || (PERSONAL_WORD.test(s) && (/\d/.test(s) || KOREAN_NUMBER.test(s))));
 }
 
 /** 문장을 자격 판정 입력과 관심 분야로 바꾼다. 알아듣지 못한 칸은 비워 둔다. */

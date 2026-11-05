@@ -20,8 +20,8 @@ function write(patch) {
   return next;
 }
 
-// 값이 하나도 없는 프로필은 입력하지 않은 것과 같다
-const hasValue = (profile) => Object.values(profile ?? {}).some((v) => v !== undefined);
+// 값이 하나도 없는 프로필은 입력하지 않은 것과 같다. 직접 확인 체크만 있어도 조건을 입력한 것은 아니다
+const hasValue = (profile) => Object.entries(profile ?? {}).some(([k, v]) => k !== 'confirmed' && v !== undefined);
 
 export function getProfile() {
   const { profile } = read();
@@ -29,9 +29,11 @@ export function getProfile() {
 }
 
 export function saveProfile(patch) {
-  const profile = { ...getProfile(), ...patch };
-  return hasValue(profile) ? write({ profile }).profile : null;
+  const profile = { ...read().profile, ...patch };
+  return hasValue(profile) || profile.confirmed ? write({ profile }).profile : null;
 }
+
+export const getConfirmed = () => read().profile?.confirmed ?? {};
 
 export const clearProfile = () => write({ profile: null });
 
@@ -59,6 +61,31 @@ export const signIn = () => write({ signedIn: true });
 export const getAlert = () => read().alert ?? null;
 export const saveAlert = (alert) => write({ alert });
 export const clearAlert = () => write({ alert: null });
+
+/** 혜택 하나만 끊는다. 남는 알림이 없으면 신청 자체를 지운다 */
+export function removeNextAlert(id) {
+  const saved = getAlert();
+  const benefits = saved.benefits.filter((b) => b !== id);
+  if (benefits.length || saved.cats?.length || saved.kinds?.length) saveAlert({ ...saved, benefits });
+  else clearAlert();
+}
+
+// 질문 기록은 탭이 열려 있는 동안만 둔다
+const TURNS_KEY = 'daeum.turns';
+export function getTurns() {
+  try {
+    return JSON.parse(sessionStorage.getItem(TURNS_KEY)) ?? [];
+  } catch {
+    return [];
+  }
+}
+export function saveTurns(turns) {
+  try {
+    sessionStorage.setItem(TURNS_KEY, JSON.stringify(turns));
+  } catch {
+    // 저장이 막혀도 대화는 이어진다
+  }
+}
 
 /** 다음 모집 알림은 기존 알림 설정을 지우지 않고 혜택만 더한다 */
 export function addNextAlert(id, email) {

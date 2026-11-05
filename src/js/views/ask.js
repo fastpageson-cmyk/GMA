@@ -1,18 +1,18 @@
 // 질문하기: 문장에서 조건을 알아듣고, 우리 데이터의 지금 열린 혜택만 카드로 보여 준다.
 // 언어 모델이 붙기 전까지는 search.js의 사전과 규칙으로 돌아간다.
 import { BENEFITS } from '../data/benefits.js';
-import { categoryLabel } from '../data/lookups.js';
-import { benefitCard, categoryChips, checkFields, esc, focusCentered, fold, icon, openBenefits, profileFields, rankBenefits, readCategoryChips, readFields, wireFields } from '../ui.js';
+import { CATEGORIES, categoryLabel } from '../data/lookups.js';
+import { benefitCard, categoryChips, checkFields, esc, focusCentered, fold, icon, judgeNotice, openBenefits, profileFields, rankBenefits, readCategoryChips, readFields, verdictTag, wireFields } from '../ui.js';
 import { effectiveStatus, INCOME_BANDS, judge, STATUS_LABELS } from '../judge.js';
-import { changedSlots, directHits, heardAnything, parseSentence, searchBenefits, turnProfile } from '../search.js';
-import { getProfile, saveProfile } from '../store.js';
+import { changedSlots, directHits, heardAnything, namedBenefits, parseSentence, searchBenefits, turnProfile } from '../search.js';
+import { getProfile, getTurns, saveProfile, saveTurns } from '../store.js';
 
 const EXAMPLES = ['용인 사는 24살 대학생인데 토익 지원 있어?', '취준생인데 면접 볼 때 받을 수 있는 돈', '자취하는데 월세 지원 받고 싶어'];
 const SHORT_EXAMPLES = ['토익 지원', '자취 월세', '장학금 있어?'];
 const MISSING_SLOTS = { age: 'birthYear', region: 'region', status: 'status', income: 'income' };
 const SLOT_QUESTIONS = { birthYear: '태어난 해를 알려 주세요.', region: '어디 사세요?', status: '지금 상태가 어떻게 되세요?', income: '가구 소득 구간을 아세요?' };
 
-let turns = [];
+let turns = getTurns();
 
 // 관심 분야는 문장에서 뽑은 값을 쓰되, 사용자가 고쳤으면 고친 값을 따른다
 const interestsOf = (turn) => turn.interests ?? turn.parsed.interests;
@@ -21,19 +21,30 @@ export function recommend(turn) {
   const profile = turn.profile;
   const interests = interestsOf(turn);
   const open = openBenefits();
-  const found = turn.interests ? open.filter((b) => interests.includes(b.category)) : searchBenefits(turn.q, open);
-  const scoped = interests.length ? found : open;
-  const usable = rankBenefits(scoped, profile).filter((b) => judge(b, profile).verdict !== 'no');
-  const blocked = found.filter((b) => judge(b, profile).verdict === 'no').slice(0, 2);
-  // 추천은 열린 것만 한다. 찾던 혜택이 마감이면 없는 척하지 않고 그 사실을 알린다
-  const closed = directHits(turn.q, BENEFITS.filter((b) => effectiveStatus(b).status === 'closed' && interests.includes(b.category)))
-    .filter((b) => judge(b, profile).verdict !== 'no').slice(0, 2);
-  return { cards: usable.slice(0, 4), matched: found.length > 0, blocked, closed };
+  const fits = (b) => judge(b, profile).verdict !== 'no';
+  const inStatus = (items, status) => items.filter((b) => effectiveStatus(b).status === status);
+  const search = (items) => (turn.interests ? items.filter((b) => interests.includes(b.category)) : searchBenefits(turn.q, items));
+  // 이름을 그대로 물었으면 상태와 관계없이 그 혜택을 맨 위에 둔다
+  const named = namedBenefits(turn.q, BENEFITS).filter((b) => !turn.interests || interests.includes(b.category));
+  const namedOpen = inStatus(named, 'open');
+  const found = [...new Set([...namedOpen, ...search(open)])];
+  const scoped = interests.length || named.length ? found : open;
+  const usable = [...namedOpen.filter(fits), ...rankBenefits(scoped, profile).filter((b) => fits(b) && !namedOpen.includes(b))];
+  const blocked = found.filter((b) => !fits(b)).slice(0, 2);
+  // 추천은 열린 것만 한다. 찾던 혜택이 마감이거나 곧 열리면 없는 척하지 않고 그 사실을 알린다
+  const closedHits = directHits(turn.q, inStatus(BENEFITS, 'closed').filter((b) => interests.includes(b.category))).filter(fits);
+  // 이름을 불렀으면 그 혜택 소식만, 아니면 낱말과 분야로 찾은 소식을 보인다
+  const closed = (named.length ? inStatus(named, 'closed') : closedHits).slice(0, 2);
+  const soon = (named.length ? inStatus(named, 'upcoming') : search(inStatus(BENEFITS, 'upcoming')).filter(fits)).slice(0, 2);
+  return { cards: usable.slice(0, 4), matched: found.length > 0, blocked, closed, soon, named };
 }
 
-/** 답을 한 문장으로 먼저 말한다. 찾던 것이 마감이면 마감이라고, 없으면 없다고 한다 */
-export function answerLead(turn, { cards, matched, closed }) {
-  if (closed.length && !directHits(turn.q, cards).length) return ['찾던 혜택은 지금 마감이에요', cards.length ? '대신 지금 열린 혜택을 골랐어요.' : '지금 열린 혜택 중에는 맞는 게 없어요.'];
+/** 답을 한 문장으로 먼저 말한다. 찾던 것이 마감이거나 곧 열리면 그렇다고, 없으면 없다고 한다 */
+export function answerLead(turn, { cards, matched, closed, soon = [], named = [] }) {
+  const instead = cards.length ? '대신 지금 열린 혜택을 골랐어요.' : '지금 열린 혜택 중에는 맞는 게 없어요.';
+  const namedMissing = named.length > 0 && !named.some((b) => effectiveStatus(b).status === 'open');
+  if (namedMissing && soon.some((b) => named.includes(b))) return ['찾던 혜택은 곧 열려요', instead];
+  if (namedMissing || (closed.length && !directHits(turn.q, cards).length)) return ['찾던 혜택은 지금 마감이에요', instead];
   if (!cards.length) return ['지금 열린 혜택 중에는 맞는 게 없어요'];
   if (!matched) return ['딱 맞는 혜택은 없어요', '지금 열린 혜택 중 가까운 것을 골랐어요. 이걸 찾으셨나요?'];
   const eligible = cards.filter((b) => judge(b, turn.profile).verdict === 'eligible').length;
@@ -93,35 +104,41 @@ const turnShell = (turn, body) => `<article class="turn" tabindex="-1">
   </article>`;
 
 const notUnderstood = (turn) => turnShell(turn, `
-  <h2 class="answer-lead">무슨 말인지 잘 모르겠어요</h2>
-  <p>찾는 분야나 내 상황을 넣어 다시 물어봐 주세요.</p>
+  <h2 class="answer-lead">이 말로는 등록된 혜택을 못 찾았어요</h2>
+  <p>아래 분야에서 고르거나 다른 말로 물어봐 주세요.</p>
+  <md-chip-set aria-label="분야별 혜택">${CATEGORIES.map((c) => `<md-assist-chip label="${esc(c.label)}" href="#/list?cat=${c.id}"></md-assist-chip>`).join('')}</md-chip-set>
   <md-chip-set aria-label="예시 문장">${SHORT_EXAMPLES.map((q) => `<md-suggestion-chip label="${esc(q)}" data-example="${esc(q)}"></md-suggestion-chip>`).join('')}</md-chip-set>
   <div class="button-row"><md-filled-tonal-button href="#/check">30초 자격 체크</md-filled-tonal-button></div>`);
 
-const closedNote = (b) => `<div class="notice-line closed-hit">${icon('schedule')}<span>${esc(b.title)} (${esc(b.sourceName)})</span><md-text-button href="#/b/${esc(b.id)}">다음 모집 알림</md-text-button></div>`;
+/** 추천 카드에 섞지 않는 혜택을 상태 글자와 함께 한 줄로 보인다 */
+const hitLine = (b, iconName, state, action) => `<div class="notice-line closed-hit">${icon(iconName)}<a class="hit-link m3-interactive" href="#/b/${esc(b.id)}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring><span><b>${state}</b> · ${esc(b.title)} (${esc(b.sourceName)})</span></a><md-text-button href="#/b/${esc(b.id)}">${action}</md-text-button></div>`;
+
+/** 대상 아님도 카드와 같은 회색 판정 상자를 쓴다. 줄 전체가 상세로 간다 */
+export const blockedLine = (b, profile) => `<div class="notice-line closed-hit"><a class="hit-link blocked-hit m3-interactive" href="#/b/${esc(b.id)}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>${verdictTag('no')}<span>${esc(b.title)} · 안 맞는 조건: ${esc(judge(b, profile).failed[0].label)}</span></a></div>`;
 
 function turnHtml(turn, index) {
-  if (!heardAnything(turn.parsed)) return notUnderstood(turn);
   const found = recommend(turn);
-  const { cards, blocked, closed } = found;
+  if (!heardAnything(turn.parsed) && !found.named.length) return notUnderstood(turn);
+  const { cards, blocked, closed, soon } = found;
   const [lead, sub] = answerLead(turn, found);
-  const blockedNote = blocked.map((b) => `<p class="notice-line">${icon('block')}<span><b>대상 아님</b> ${esc(b.title)} · 안 맞는 조건: ${esc(judge(b, turn.profile).failed[0].label)}</span></p>`).join('');
   const slot = turn.editing ?? (turn.asked ? null : missingSlot(cards, turn.profile));
   const answer = !cards.length
     ? '<div class="button-row"><md-outlined-button href="#/list">전체 혜택 보기</md-outlined-button></div>'
     : `<div class="card-grid two">${cards.map((b) => {
          const r = judge(b, turn.profile);
-         return benefitCard(b, turn.profile, r.verdict === 'eligible' ? '조건이 맞고 지금 신청할 수 있어요' : b.oneLine);
-       }).join('')}</div>
-       <p class="notice-line">${icon('info')}판정은 입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>`;
+         // 지역 밖 안내는 benefitCard의 카드 줄이 맡는다
+         return benefitCard(b, turn.profile, r.outside ? undefined : r.verdict === 'eligible' ? '조건이 맞고 지금 신청할 수 있어요' : b.oneLine);
+       }).join('')}</div>`;
   const editor = slot ? slotEditor(turn, index, slot, turn.editing ? '맞게 고쳐 주세요.' : SLOT_QUESTIONS[slot]) : '';
   const heard = `<p class="hint">눌러서 고칠 수 있어요</p>${understoodChips(turn, index)}${turn.editing ? editor : ''}`;
   return turnShell(turn, `
       <h2 class="answer-lead">${lead}</h2>
       ${sub ? `<p>${sub}</p>` : ''}
-      ${closed.map(closedNote).join('')}
-      ${blockedNote}
+      ${soon.map((b) => hitLine(b, 'event', '곧 열려요', '열리면 알림 받기')).join('')}
+      ${closed.map((b) => hitLine(b, 'schedule', '마감', '다음 모집 알림 받기')).join('')}
+      ${blocked.map((b) => blockedLine(b, turn.profile)).join('')}
       ${answer}
+      ${judgeNotice(cards.length || blocked.length)}
       ${turn.editing ? '' : editor}
       ${fold(`이렇게 알아들었어요 <span class="hint">${esc(heardLine(turn))}</span>`, heard, Boolean(turn.editing))}
       ${saveOffer(turn, index)}`);
@@ -164,6 +181,7 @@ export function ask(root, { query }) {
     const area = root.querySelector('.turns');
     area.innerHTML = turns.map(turnHtml).join('');
     wireFields(area);
+    saveTurns(turns);
   };
 
   root.onsubmit = (e) => {

@@ -1,20 +1,21 @@
-// 홈: 큰 제목 → 30초 자격 체크 → 질문 입력 → 필요한 것 고르기 → 곧 마감
+// 홈: 큰 제목 → 30초 자격 체크(조건을 넣었으면 내 혜택 보기) → 질문 입력 → 필요한 것 고르기 → 곧 마감
 import { CATEGORIES } from '../data/lookups.js';
-import { benefitCard, closingSoon, esc, icon } from '../ui.js';
+import { answerHeading, benefitCard, closingSoon, esc, icon, judgeNotice, openBenefits } from '../ui.js';
 import { getProfile } from '../store.js';
 
 export function home(root) {
   const profile = getProfile();
-  const soon = closingSoon(6);
+  const soon = closingSoon(6, profile);
 
   root.innerHTML = `
     <section class="hero">
       <div class="hero-main">
       <h1 class="hero-title" tabindex="-1">나도 받을 수 있는<br>지금 열린 혜택</h1>
-      <p class="hero-sub">조건 몇 가지만 고르면 받을 수 있는 혜택과 금액을 바로 알려 드려요. 로그인은 없어요.</p>
+      <p class="hero-sub">${profile ? `${esc(answerHeading(openBenefits(), profile))}예요.` : '조건 몇 가지만 고르면 받을 수 있는 혜택과 금액을 바로 알려 드려요. 로그인은 없어요.'}</p>
       <div class="hero-actions">
-        <md-filled-button href="#/check">30초 자격 체크</md-filled-button>
-        ${profile ? '<md-outlined-button href="#/list">내 혜택 다시 보기</md-outlined-button>' : ''}
+        ${profile
+          ? '<md-filled-button href="#/list">내 혜택 보기</md-filled-button><md-text-button href="#/check">조건 고치기</md-text-button>'
+          : '<md-filled-button href="#/check">30초 자격 체크</md-filled-button>'}
       </div>
       <form class="hero-search" role="search" id="home-ask">
         <label class="hint" for="home-q">내 상황을 문장으로 물어봐도 돼요</label>
@@ -26,7 +27,7 @@ export function home(root) {
       </form>
       </div>
       ${soon.length ? `<div class="hero-side">
-        <h2 class="section-title">가장 먼저 끝나요</h2>
+        <h2 class="section-title">곧 마감</h2>
         ${soon.slice(0, 2).map((b) => benefitCard(b, profile)).join('')}
       </div>` : ''}
     </section>
@@ -44,6 +45,7 @@ export function home(root) {
         <md-text-button href="#/list">전체 보기</md-text-button>
       </div>
       ${soon.length ? `<div class="card-grid four soon-grid">${soon.map((b) => benefitCard(b, profile)).join('')}</div>` : '<p class="empty">마감이 정해진 혜택이 지금은 없어요.</p>'}
+      ${judgeNotice(profile && soon.length)}
     </section>`;
 
   root.querySelector('#home-ask').addEventListener('submit', (e) => {

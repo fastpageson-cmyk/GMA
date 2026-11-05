@@ -1,7 +1,7 @@
 // 알림 받기: 로그인 없이 이메일만 남긴다. 신청한 내용이 있으면 먼저 보여 주고 바꾸거나 끊을 수 있게 한다.
 import { categoryLabel } from '../data/lookups.js';
 import { categoryChips, checkField, EMAIL_PATTERN, esc, findBenefit, focusCentered, icon, profileFields, profileSummary, readCategoryChips, readFields, wireFields } from '../ui.js';
-import { clearAlert, getAlert, getProfile, saveAlert, saveProfile } from '../store.js';
+import { clearAlert, getAlert, getProfile, removeNextAlert, saveAlert, saveProfile } from '../store.js';
 
 const KINDS = [
   { id: 'new', label: '새 혜택이 열릴 때', on: true },
@@ -12,7 +12,7 @@ const KINDS = [
 const row = (label, value) => (value ? `<div class="info-row"><dt>${label}</dt><dd>${esc(value)}</dd></div>` : '');
 
 function summary(saved) {
-  const titles = (saved.benefits ?? []).map((id) => findBenefit(id)?.title).filter(Boolean);
+  const followed = (saved.benefits ?? []).map(findBenefit).filter(Boolean);
   return `<div class="narrow">
     <h1 class="page-title" tabindex="-1">알림을 받고 있어요</h1>
     <p class="page-sub">시제품이라 실제 메일은 아직 가지 않아요.</p>
@@ -21,8 +21,8 @@ function summary(saved) {
         ${row('받을 곳', saved.email)}
         ${row('관심 분야', saved.cats?.map(categoryLabel).join(', '))}
         ${row('언제', saved.kinds?.map((id) => KINDS.find((k) => k.id === id)?.label).join(', '))}
-        ${row('소식 받는 혜택', titles.join(', '))}
       </dl>
+      ${followed.length ? `<div><p class="info-sub">소식 받는 혜택</p><ul class="followed-list">${followed.map((b) => `<li><span>${esc(b.title)}</span><md-text-button data-unfollow="${esc(b.id)}" aria-label="${esc(b.title)} 소식 끊기">끊기</md-text-button></li>`).join('')}</ul></div>` : ''}
       <div class="button-row">
         <md-outlined-button id="alert-edit">바꾸기</md-outlined-button>
         <md-text-button id="alert-stop">그만 받기</md-text-button>
@@ -32,24 +32,27 @@ function summary(saved) {
 }
 
 function formHtml(saved, profile, target) {
-  const kindOn = (k) => (saved?.kinds?.length ? saved.kinds.includes(k.id) : k.on) || (target && k.id === 'next');
+  const kindOn = (k) => (saved ? saved.kinds?.includes(k.id) : k.on) || (target && k.id === 'next');
+  // 혜택 소식을 받으면 그것만으로도 알림이 가므로 관심 분야는 비워도 된다
+  const catsOptional = target || saved?.benefits?.length;
   return `<div class="alert-layout">
     <div>
       <h1 class="page-title" tabindex="-1">새 혜택이 생기면 알려 드려요</h1>
       <p class="page-sub">로그인도 회원가입도 없어요. 이메일 하나면 돼요.</p>
       ${target ? `<p class="notice-line">${icon('notifications')}${esc(target.title)} 소식도 함께 보내 드려요.</p>` : ''}
       <form id="alert-form" class="stack" novalidate>
-        <fieldset class="field-group plain"><legend class="field-title">1. 관심 분야 <span class="hint">하나 이상</span></legend>
+        <fieldset class="field-group plain"><legend class="field-title">1. 관심 분야 <span class="hint">${catsOptional ? '비워도 돼요' : '하나 이상'}</span></legend>
           ${categoryChips(saved?.cats)}
           <p class="field-error" id="cat-error" role="alert" hidden>관심 분야를 하나 이상 골라 주세요</p>
         </fieldset>
         <div class="field-group"><p class="field-title">2. 내 조건${profile ? '' : ' <span class="hint">비워도 돼요</span>'}</p>
           ${profile
-            ? `<div class="condition-bar"><p>${profileSummary(profile)}</p><md-text-button href="#/check">수정</md-text-button></div>`
+            ? `<div class="condition-bar"><p>${profileSummary(profile)}</p><md-text-button type="button" id="alert-edit-conditions">수정</md-text-button></div>`
             : `<div id="alert-conditions">${profileFields(['birthYear', 'region', 'status'], null)}</div>`}
         </div>
         <fieldset class="field-group plain"><legend class="field-title">3. 언제 알려 드릴까요</legend>
           ${KINDS.map((k) => `<label class="check-row"><md-checkbox touch-target="wrapper" name="kind" value="${k.id}"${kindOn(k) ? ' checked' : ''}></md-checkbox><span>${k.label}</span></label>`).join('')}
+          <p class="field-error" id="kind-error" role="alert" hidden>언제 받을지 하나 이상 골라 주세요</p>
         </fieldset>
         <div class="field-group"><p class="field-title">4. 받을 곳</p>
           <md-outlined-text-field name="email" type="email" label="이메일" no-asterisk value="${esc(saved?.email ?? '')}" pattern="${EMAIL_PATTERN}" required error-text="이메일을 확인해 주세요"></md-outlined-text-field>
@@ -79,6 +82,14 @@ export function alert(root, { query }) {
   const bindForm = (saved) => {
     const form = root.querySelector('#alert-form');
     wireFields(form);
+    // 자격 체크로 나가면 고른 분야와 이메일이 사라지므로 이 자리에서 고친다
+    form.querySelector('#alert-edit-conditions')?.addEventListener('click', () => {
+      form.querySelector('.condition-bar').outerHTML = `<div id="alert-conditions">${profileFields(['birthYear', 'region', 'status'], getProfile())}</div>`;
+      const conditions = form.querySelector('#alert-conditions');
+      wireFields(conditions);
+      const first = conditions.querySelector('md-outlined-select');
+      first.updateComplete.then(() => first.focus());
+    });
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const cats = readCategoryChips(form);
@@ -86,19 +97,27 @@ export function alert(root, { query }) {
       const email = form.querySelector('md-outlined-text-field');
       const consent = form.querySelector('md-checkbox[name="consent"]');
       const emailOk = checkField(email);
-      form.querySelector('#cat-error').hidden = cats.length > 0;
+      const benefits = [...new Set([...(saved?.benefits ?? []), target?.id].filter(Boolean))];
+      const catsMissing = !cats.length && !benefits.length;
+      const kindsMissing = !kinds.length && !benefits.length;
+      form.querySelector('#cat-error').hidden = !catsMissing;
+      form.querySelector('#kind-error').hidden = !kindsMissing;
       form.querySelector('#consent-error').hidden = consent.checked;
       // 고정 버튼을 눌러도 오류가 화면 밖에 남지 않게 첫 오류 칸으로 옮긴다
-      const first = (!cats.length && form.querySelector('md-filter-chip')) || (!emailOk && email) || (!consent.checked && consent);
+      const first = (catsMissing && form.querySelector('md-filter-chip')) || (kindsMissing && form.querySelector('md-checkbox[name="kind"]')) || (!emailOk && email) || (!consent.checked && consent);
       if (first) return focusCentered(first);
 
       const conditions = form.querySelector('#alert-conditions');
-      if (conditions) saveProfile(readFields(conditions));
-      const benefits = [...new Set([...(saved?.benefits ?? []), target?.id].filter(Boolean))];
+      if (conditions) {
+        const data = readFields(conditions);
+        if (data.status && data.status !== 'student') data.schoolId = undefined;
+        saveProfile(data);
+      }
       saveAlert({ email: email.value, cats, kinds, benefits });
       root.querySelector('.alert-layout').innerHTML = `<div class="narrow done-card">
         <h1 class="page-title" tabindex="-1">알림을 신청했어요</h1>
-        <p>${esc(email.value)}로 보내 드릴게요. 시제품이라 실제 메일은 아직 가지 않아요.</p>
+        <p>보낼 곳: ${esc(email.value)}</p>
+        <p>시제품이라 실제 메일은 아직 가지 않아요.</p>
         <div class="button-row"><md-filled-tonal-button href="#/list">혜택 보러 가기</md-filled-tonal-button></div>
       </div>`;
       root.querySelector('h1').focus();
@@ -123,6 +142,12 @@ export function alert(root, { query }) {
         root.querySelector('h1').focus();
         window.M3.showSnackbar('알림을 끊었어요');
       });
+      root.querySelectorAll('[data-unfollow]').forEach((btn) => btn.addEventListener('click', () => {
+        removeNextAlert(btn.dataset.unfollow);
+        paint();
+        root.querySelector('h1').focus();
+        window.M3.showSnackbar('이 혜택 소식을 끊었어요');
+      }));
       return;
     }
     root.innerHTML = formHtml(saved, getProfile(), target);

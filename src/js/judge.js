@@ -1,6 +1,8 @@
 // 자격 판정. handoff/20_데이터_명세.md 3장 규칙을 그대로 옮긴 순수 함수.
 // 원칙: 애매하면 무조건 '확인 필요'. 틀리게 '받을 수 있음'을 띄우는 게 가장 나쁜 실패다.
 
+import { REGIONS } from './data/regions.js';
+
 // 가구 소득 구간. 값은 기준 중위소득 %. 구간 하나로 답이 갈리면 '확인 필요'로 둔다.
 export const INCOME_BANDS = {
   low: { label: '낮은 편 (기준 중위소득 60% 이하)', min: 0, max: 60 },
@@ -22,6 +24,8 @@ export function effectiveStatus(benefit, today = new Date()) {
     return { status: 'closed', reason: 'period' };
   }
   if (period.start && parseDay(period.start).getTime() > today.getTime()) return { status: 'upcoming' };
+  // 곧 열림으로 적어 둔 혜택도 시작일이 되면 열린다
+  if (status === 'upcoming' && period.start) return { status: 'open' };
   return { status };
 }
 
@@ -83,8 +87,31 @@ function schoolCondition({ schoolIds }, { schoolId }) {
   return cond('school', '다니는 학교', schoolIds.includes(schoolId) ? 'met' : 'failed');
 }
 
+// 데이터 문장 가운데 입력값으로 이미 답이 나오는 것. 문장은 그대로 두고 본인에게 다시 묻지 않는다
+const age34 = (p) => p.birthYear >= new Date().getFullYear() - 34;
+const ANSWERED = {
+  '구직 중이에요': (p) => p.status === 'student' || p.status === 'jobseeker',
+  '용인시에 살거나 용인 지역 대학에 재학·휴학 중이에요': (p) => p.sigungu === '용인시',
+  '만 34세 이하예요 (병역 기간만큼 최대 37세까지 늘어나요)': age34,
+  '채용일 기준 만 34세 이하예요 (군필자는 최대 39세)': age34,
+  '신청일에 해당 시군에 살아요': (p) => Boolean(p.sigungu),
+};
+
+/** 시·군·구가 주는데 지역 조건이 문장에만 있는 혜택이면 그 지역 이름을 낸다. */
+function localPlace({ source, sourceName, eligibility }) {
+  return source === 'city' && !eligibility?.regions?.length && /[시군구]$/.test(sourceName) ? sourceName : null;
+}
+
+/** 입력한 사는 곳이 그 지역 밖이면 지역 이름을 낸다. 지역 대학 재학처럼 예외가 있어 대상 아님으로 단정하지는 않는다 */
+function outsidePlace(benefit, { sido, sigungu }) {
+  const place = localPlace(benefit);
+  if (!place || !sido) return null;
+  const here = sigungu ? sigungu === place : REGIONS[sido]?.includes(place);
+  return here ? null : place;
+}
+
 /**
- * @returns {{verdict: 'eligible'|'check'|'no'|'unknown', met: object[], unknown: object[], failed: object[]}}
+ * @returns {{verdict: 'eligible'|'check'|'no'|'unknown', met: object[], unknown: object[], failed: object[], outside: string|null}}
  * verdict 'unknown'은 아직 아무 조건도 입력하지 않은 상태다.
  */
 export function judge(benefit, profile) {
@@ -94,10 +121,10 @@ export function judge(benefit, profile) {
     ageCondition(e, p), regionCondition(e, p), statusCondition(e, p), incomeCondition(e, p), schoolCondition(e, p),
     e.residencyMonths ? cond('residency', `사는 곳에 ${e.residencyMonths}개월 이상 살았는지`, 'unknown') : null,
     // 데이터로 판정 못 하는 조건은 사람이 직접 확인해 주면 입력으로 친다
-    ...(e.other ?? []).map((text) => cond('other', text, p.confirmed?.[benefit.id]?.includes(text) ? 'met' : 'unknown')),
+    ...(e.other ?? []).filter((text) => !ANSWERED[text]?.(p)).map((text) => cond('other', text, p.confirmed?.[benefit.id]?.includes(text) ? 'met' : 'unknown')),
   ].filter(Boolean);
   const pick = (result) => conditions.filter((c) => c.result === result);
-  const result = { met: pick('met'), unknown: pick('unknown'), failed: pick('failed') };
+  const result = { met: pick('met'), unknown: pick('unknown'), failed: pick('failed'), outside: outsidePlace(benefit, p) };
 
   if (!profile) return { verdict: 'unknown', ...result };
   if (result.failed.length) return { verdict: 'no', ...result };
@@ -107,9 +134,9 @@ export function judge(benefit, profile) {
 }
 
 /** 입력한 조건은 모두 맞고 사람이 직접 볼 조건만 남았는지. 판정 자체는 그대로 '확인 필요'다. */
-export function onlyDirectLeft({ verdict, met, unknown }) {
+export function onlyDirectLeft({ verdict, met, unknown, outside }) {
   const direct = (c) => c.key === 'other' || c.key === 'residency';
-  return verdict === 'check' && met.some((c) => c.key !== 'other') && unknown.length > 0 && unknown.every(direct);
+  return verdict === 'check' && !outside && met.some((c) => c.key !== 'other') && unknown.length > 0 && unknown.every(direct);
 }
 
 function conditionFields(benefit) {

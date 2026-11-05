@@ -1,7 +1,7 @@
 // 맞춤 혜택 목록: 정부 정책과 학교 장학을 한 목록에. 모집 중이 기본, 대상 아님·마감은 접어 둔다.
 import { BENEFITS } from '../data/benefits.js';
 import { CATEGORIES, categoryLabel, SOURCES } from '../data/lookups.js';
-import { benefitCard, cardGrid, esc, fold, icon, profileSummary, rankBenefits } from '../ui.js';
+import { answerHeading, benefitCard, cardGrid, esc, fold, icon, judgeNotice, profileSummary, rankBenefits } from '../ui.js';
 import { daysLeft, effectiveStatus, judge, onlyDirectLeft } from '../judge.js';
 import { getProfile } from '../store.js';
 
@@ -76,14 +76,7 @@ export function results(profile) {
   const no = verdicts('no');
   const upcoming = by('upcoming');
   const closed = by('closed');
-  const scope = activeFilters().length ? `${activeFilters().map(([, , label]) => label).join('·')} ` : '';
-
-  let heading = `지금 열린 ${scope}혜택 ${open.length}개`;
-  if (profile) {
-    if (eligible.length) heading = `지금 받을 수 있는 ${scope}혜택 ${eligible.length}개`;
-    else if (direct.length) heading = `입력한 조건이 맞는 ${scope}혜택 ${direct.length}개`;
-    else heading = `지금 확인해 볼 ${scope}혜택 ${check.length}개`;
-  }
+  const scope = activeFilters().length ? `${activeFilters().map(([, , label]) => label).join(', ')} ` : '';
 
   const folded = upcoming.length || no.length || closed.length;
   const empty = `<div class="empty-card"><p class="empty-title">이 조건으로는 지금 열린 혜택이 없어요.</p>
@@ -98,11 +91,11 @@ export function results(profile) {
     : open.length ? `<section class="verdict-group"><h2 class="visually-hidden">지금 열린 혜택</h2>${cardGrid(order(open), null)}</section>` : '';
 
   return `
-    <h1 class="page-title" tabindex="-1">${heading}</h1>
+    <h1 class="page-title" tabindex="-1">${answerHeading(open, profile, scope)}</h1>
     ${profile && !eligible.length && direct.length ? '<p class="result-sub">상세에서 직접 확인을 마치면 받을 수 있음으로 바뀌어요.</p>' : ''}
     ${filterChips()}
     ${shown || empty}
-    ${profile ? `<p class="notice-line">${icon('info')}판정은 입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>` : ''}
+    ${judgeNotice(profile)}
     ${fold(`곧 열리는 혜택 ${upcoming.length}개`, upcoming.length && cardGrid(upcoming, profile), !filters.openOnly)}
     ${fold(`대상 아님 ${no.length}개 · 못 받는 이유 남기기`, no.length && `<div class="card-grid">${no.map((b) => benefitCard(b, profile)).join('')}</div>`, !filters.openOnly)}
     ${fold(`마감된 혜택 ${closed.length}개`, closed.length && cardGrid(closed, profile), !filters.openOnly)}`;
@@ -119,7 +112,7 @@ export function list(root, { query, from }) {
   const filterButton = `<md-outlined-button class="filter-open" data-open="#filter-sheet">${icon('filter_list', 'icon')}<span id="filter-label">걸러보기</span></md-outlined-button>`;
   root.innerHTML = `
     ${profile
-      ? `<div class="condition-bar"><p class="condition-text"><span class="label">내 조건</span> ${profileSummary(profile)}</p><md-text-button href="#/check">수정</md-text-button>${filterButton}</div>`
+      ? `<div class="condition-bar"><p class="condition-text"><span class="label">내 조건</span> ${profileSummary(profile)}</p><md-text-button href="#/check">조건 수정</md-text-button>${filterButton}</div>`
       : `<div class="condition-bar invite"><p class="condition-text">조건을 고르면 내가 받을 수 있는 혜택만 골라 드려요.</p><md-filled-tonal-button href="#/check">30초 자격 체크</md-filled-tonal-button>${filterButton}</div>`}
     <div class="list-layout">
       <aside class="filter-side" aria-label="걸러보기">${filterPanel()}</aside>

@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { BENEFITS } from '../src/js/data/benefits.js';
 import { daysLeft, effectiveStatus, INCOME_BANDS, judge, missingFields, neededFields, onlyDirectLeft } from '../src/js/judge.js';
-import { changedSlots, directHits, hasPersonalNumber, heardAnything, parseSentence, searchBenefits, turnProfile } from '../src/js/search.js';
-import { addNextAlert, getAlert, getProfile, saveAlert, saveProfile } from '../src/js/store.js';
-import { benefitCard, closingSoon, EMAIL_PATTERN, fold, openBenefits, rankBenefits, similarOpen, verdictTag } from '../src/js/ui.js';
-import { answerLead, recommend } from '../src/js/views/ask.js';
+import { changedSlots, directHits, hasPersonalNumber, heardAnything, namedBenefits, parseSentence, searchBenefits, turnProfile } from '../src/js/search.js';
+import { addNextAlert, getAlert, getConfirmed, getProfile, removeNextAlert, saveAlert, saveProfile } from '../src/js/store.js';
+import { answerHeading, benefitCard, closingSoon, EMAIL_PATTERN, fold, judgeNotice, openBenefits, rankBenefits, similarOpen, verdictTag } from '../src/js/ui.js';
+import { answerLead, blockedLine, recommend } from '../src/js/views/ask.js';
+import { verdictBand } from '../src/js/views/detail.js';
+import { home } from '../src/js/views/home.js';
 import { results } from '../src/js/views/list.js';
 
 const base = { eligibility: { birthYearMin: 1992, birthYearMax: 2007, regions: ['경기도 용인시'], statuses: ['student', 'jobseeker'] } };
@@ -354,4 +356,190 @@ test('열린 혜택이 없으면 없다고 답한다', () => {
   const none = { cards: [], matched: false, closed: [] };
   assert.deepEqual(answerLead({ q: '월세', profile: {} }, none), ['지금 열린 혜택 중에는 맞는 게 없어요']);
   assert.equal(answerLead({ q: '월세', profile: {} }, { ...none, closed: [{ title: '마감된 혜택' }] })[0], '찾던 혜택은 지금 마감이에요');
+});
+
+test('곧 열림은 시작일 당일부터 열리고, 마감 다음날 닫힌다', () => {
+  const b = { status: 'upcoming', period: { start: '2026-11-05', end: '2026-11-17' } };
+  assert.equal(effectiveStatus(b, new Date('2026-11-04T23:59:00')).status, 'upcoming');
+  assert.equal(effectiveStatus(b, new Date('2026-11-05T00:00:00')).status, 'open');
+  assert.equal(effectiveStatus(b, new Date('2026-11-17T23:00:00')).status, 'open');
+  assert.equal(effectiveStatus(b, new Date('2026-11-18T00:00:00')).status, 'closed');
+  // 시작일을 모르는 혜택은 곧 열림에 머문다
+  assert.equal(effectiveStatus({ status: 'upcoming', period: {} }, new Date('2026-11-05T12:00:00')).status, 'upcoming');
+});
+
+const answerTo = (q, saved = null) => {
+  const parsed = parseSentence(q, 2026);
+  const turn = { q, parsed, profile: turnProfile(saved, parsed) };
+  const found = recommend(turn);
+  return { found, lead: answerLead(turn, found) };
+};
+
+test('시범 데이터: 혜택 이름 그대로 물으면 28건 모두 답에 나온다', () => {
+  for (const b of BENEFITS) {
+    const { found } = answerTo(b.title);
+    const shown = [...found.cards, ...found.closed, ...found.soon, ...found.blocked];
+    assert.ok(shown.some((x) => x.id === b.id), b.title);
+  }
+});
+
+test('이름은 띄어쓰기와 조사가 달라도 찾고, 짧은 분야 낱말은 이름으로 보지 않는다', () => {
+  const ids = (q) => namedBenefits(q, BENEFITS).map((b) => b.id);
+  assert.deepEqual(ids('내일배움카드가 뭐야'), ['national-learning-card']);
+  assert.deepEqual(ids('부동산복비할인'), ['yongin-realtor-fee-discount']);
+  assert.deepEqual(ids('국가장학금 있어?'), ['kosaf-national-type1', 'kosaf-national-type2']);
+  for (const q of ['장학금', '장학금 지원', '토익 지원', '지원사업 있어?']) assert.deepEqual(ids(q), [], q);
+});
+
+test('시범 데이터: 찾던 혜택이 곧 열리면 곧 열린다고 답하고 카드에 섞지 않는다', () => {
+  const { found, lead } = answerTo('국가장학금');
+  assert.equal(lead[0], '찾던 혜택은 곧 열려요');
+  assert.deepEqual(found.soon.map((b) => b.id), ['kosaf-national-type1', 'kosaf-national-type2']);
+  assert.ok(found.cards.every((b) => effectiveStatus(b).status === 'open'));
+  assert.equal(answerTo('장학금 지원').found.soon.length, 2);
+});
+
+test('시범 데이터: 이름을 부른 마감 혜택은 낱말이 걸린 열린 혜택이 있어도 마감이라고 답한다', () => {
+  assert.equal(answerTo('청년 월세 지원').lead[0], '찾던 혜택은 지금 마감이에요');
+  assert.deepEqual(answerTo('부동산 복비 할인').found.cards.map((b) => b.id), ['yongin-realtor-fee-discount']);
+});
+
+test('시·군·구 혜택은 그 지역 밖 사람에게 조건이 맞는다고 하지 않는다', () => {
+  const coaching = BENEFITS.find((b) => b.id === 'yongin-ai-job-coaching');
+  const busan = { birthYear: 2004, sido: '부산광역시', sigungu: '해운대구', status: 'student', income: 'unknown' };
+  const r = judge(coaching, busan);
+  assert.equal(r.outside, '용인시');
+  assert.equal(r.verdict, 'check');
+  assert.equal(onlyDirectLeft(r), false);
+  assert.match(benefitCard(coaching, busan), /용인시 혜택이에요\. 사는 곳을 확인해 주세요/);
+  // 같은 시·도 다른 시, 시·도만 입력해도 지역 밖을 안다
+  assert.equal(judge(coaching, { ...busan, sido: '경기도', sigungu: '수원시' }).outside, '용인시');
+  assert.equal(judge(coaching, { ...busan, sigungu: undefined }).outside, '용인시');
+  assert.equal(judge(coaching, { ...busan, sido: '경기도', sigungu: undefined }).outside, null);
+  assert.equal(onlyDirectLeft(judge(coaching, { ...busan, sido: '경기도', sigungu: '용인시' })), true);
+  // 사는 곳 요건을 모르는 기관 혜택은 지역 밖으로 보지 않는다
+  assert.equal(judge(BENEFITS.find((b) => b.id === 'yongin-solo-startup-office'), busan).outside, null);
+});
+
+test('입력값으로 답이 나오는 직접 확인 문장은 다시 묻지 않는다', () => {
+  const get = (id) => BENEFITS.find((b) => b.id === id);
+  const left = (id, p) => judge(get(id), p).unknown.map((c) => c.label);
+  const yongin = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student' };
+  assert.deepEqual(left('yongin-ai-job-coaching', yongin), ['올해 이 사업을 신청한 적이 없어요']);
+  assert.equal(left('yongin-ai-job-coaching', { ...yongin, sigungu: '수원시' }).length, 2);
+  const job = { birthYear: 2004, status: 'jobseeker' };
+  assert.deepEqual(left('national-employment-support', job), ['유형별 소득·재산·취업 경험 조건을 고용24에서 확인했어요']);
+  // 34세를 넘으면 병역 문장은 본인이 봐야 한다
+  assert.equal(left('national-employment-support', { ...job, birthYear: 1990 }).length, 2);
+});
+
+test('직접 확인 체크만 저장해도 조건을 입력한 것으로 치지 않는다', () => {
+  const data = new Map();
+  globalThis.localStorage = { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) };
+  saveProfile({ confirmed: { a: ['가'] } });
+  assert.equal(getProfile(), null);
+  assert.deepEqual(getConfirmed(), { a: ['가'] });
+  const learning = BENEFITS.find((b) => b.id === 'national-learning-card');
+  saveProfile({ confirmed: { [learning.id]: learning.eligibility.other } });
+  assert.equal(judge(learning, { confirmed: getConfirmed() }).verdict, 'eligible');
+  saveProfile({ birthYear: 2002 });
+  assert.deepEqual(getProfile().confirmed[learning.id], learning.eligibility.other);
+});
+
+test('혜택 소식 하나만 끊고, 남는 알림이 없으면 신청을 지운다', () => {
+  const data = new Map();
+  globalThis.localStorage = { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) };
+  saveAlert({ cats: [], kinds: [], email: 'a@b.co', benefits: ['x', 'y'] });
+  removeNextAlert('x');
+  assert.deepEqual(getAlert().benefits, ['y']);
+  removeNextAlert('y');
+  assert.equal(getAlert(), null);
+  saveAlert({ cats: ['job'], kinds: ['new'], email: 'a@b.co', benefits: ['x'] });
+  removeNextAlert('x');
+  assert.deepEqual(getAlert().cats, ['job']);
+});
+
+test('후기의 만점·분위·등급과 한글 숫자도 걸러낸다', () => {
+  for (const text of ['4.3 만점에 3.9', '3분위', '1등급', '연봉 삼천인데 탈락', '학점 사점오']) assert.equal(hasPersonalNumber(text), true, text);
+  for (const text of ['신청 3일 만에 됐어요', '10분이면 돼요', '서류 3장이면 끝', '소득 서류가 많아요', '일이 많아요']) assert.equal(hasPersonalNumber(text), false, text);
+});
+
+test('앱의 분야 이름 낱말은 알아듣고, 등록되지 않은 말은 추천하지 않는다', () => {
+  for (const q of ['공부', '생활', '취업', '이사', '복비']) assert.equal(heardAnything(parseSentence(q, 2026)), true, q);
+  for (const q of ['교통비', '유학', '육아', '도서관']) assert.equal(heardAnything(parseSentence(q, 2026)), false, q);
+});
+
+test('판정 안내는 판정이 있을 때만 붙는다', () => {
+  assert.match(judgeNotice({ birthYear: 2002 }), /공고 기준으로 다시 확인하세요/);
+  assert.equal(judgeNotice(null), '');
+});
+
+test('곧 마감은 조건을 넣은 사람에게 쓸 수 없는 혜택을 뺀다', () => {
+  const profile = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', income: 'low' };
+  assert.ok(closingSoon(28).some((b) => judge(b, profile).verdict === 'no'));
+  const mine = closingSoon(28, profile);
+  assert.ok(mine.length > 0);
+  assert.ok(mine.every((b) => judge(b, profile).verdict !== 'no' && !judge(b, profile).outside));
+  const busan = { ...profile, sido: '부산광역시', sigungu: '해운대구' };
+  assert.ok(closingSoon(28, busan).every((b) => !judge(b, busan).outside));
+});
+
+test('내 조건 한 줄 답은 앞선 묶음을 말하고 프로필이 없으면 열린 수를 말한다', () => {
+  const eligible = { eligibility: { birthYearMin: 1990 } };
+  const direct = { eligibility: { birthYearMin: 1990, other: ['직접 볼 조건'] } };
+  const unknown = { eligibility: { birthYearMin: 1990, incomeMaxPercent: 100 } };
+  const p = { birthYear: 2002 };
+  assert.equal(answerHeading([eligible, direct], null), '지금 열린 혜택 2개');
+  assert.equal(answerHeading([eligible, direct], p), '지금 받을 수 있는 혜택 1개');
+  assert.equal(answerHeading([direct, unknown], p), '입력한 조건이 맞는 혜택 1개');
+  assert.equal(answerHeading([unknown], p, '월세·집 '), '지금 확인해 볼 월세·집 혜택 1개');
+});
+
+test('조건을 넣은 사람의 홈은 내 혜택 보기가 주 행동이고 실제 수를 말한다', () => {
+  const render = (profile) => {
+    const data = new Map(profile ? [['daeum.v1', JSON.stringify({ profile })]] : []);
+    globalThis.localStorage = { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) };
+    const root = { innerHTML: '', querySelector: () => ({ addEventListener() {} }) };
+    home(root);
+    return root.innerHTML;
+  };
+  const fresh = render(null);
+  assert.match(fresh, /<md-filled-button href="#\/check">30초 자격 체크/);
+  assert.doesNotMatch(fresh, /내 혜택 보기/);
+  const back = render({ birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', income: 'low' });
+  assert.match(back, /<md-filled-button href="#\/list">내 혜택 보기/);
+  assert.match(back, /<md-text-button href="#\/check">조건 고치기/);
+  assert.doesNotMatch(back, /30초 자격 체크/);
+  assert.match(back, /혜택 \d+개예요/);
+  assert.doesNotMatch(back, /가장 먼저 끝나요/);
+});
+
+test('판정 띠는 끝난 조건을 접고 남은 일만 펼친다', () => {
+  const b = { id: 'x', eligibility: { birthYearMin: 1990, other: ['직접 볼 조건'] } };
+  const p = { birthYear: 2002 };
+  const before = verdictBand(judge(b, p), true);
+  const opened = before.split('<details')[0];
+  assert.match(opened, /data-confirm/);
+  assert.match(before, /맞은 조건 1가지/);
+  assert.match(before, /공고 기준으로 다시 확인하세요/);
+  const after = verdictBand(judge(b, { ...p, confirmed: { x: ['직접 볼 조건'] } }), true);
+  assert.doesNotMatch(after.split('<details')[0], /data-confirm/);
+  assert.match(after, /맞은 조건 2가지/);
+  assert.match(after, /<details[\s\S]*data-confirm/);
+  assert.match(after, /공고 기준으로 다시 확인하세요/);
+});
+
+test('대상 아님 띠의 행동은 글자 버튼뿐이다', () => {
+  const b = { id: 'x', eligibility: { birthYearMin: 2010 } };
+  const band = verdictBand(judge(b, { birthYear: 2002 }), true, 'https://example.com');
+  assert.doesNotMatch(band, /md-(outlined|filled)/);
+  assert.match(band, /<md-text-button data-tab-go="2">/);
+});
+
+test('질문 답변의 대상 아님은 회색 판정 상자를 쓰고 상세로 간다', () => {
+  const b = { id: 'x', title: '혜택', eligibility: { birthYearMin: 2010 } };
+  const line = blockedLine(b, { birthYear: 2002 });
+  assert.match(line, /class="verdict no"/);
+  assert.match(line, /href="#\/b\/x"/);
+  assert.match(line, /안 맞는 조건: 나이/);
 });
