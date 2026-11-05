@@ -12,6 +12,12 @@ const seedTag = (item) => (item.seed ? '<span class="seed-tag">시범 글</span>
 const postTitle = (p) => p.title || `‘${findBenefit(p.benefitId)?.title ?? '정책'}’에 남긴 댓글`;
 const paragraphs = (text) => esc(text).split('\n').map((line) => `<p>${line}</p>`).join('');
 
+/** 글 맨 아래 띠: 어떤 정책 이야기인지 보여 주고, 누르면 그 정책 카드로 간다 */
+const policyStrip = (benefitId) => {
+  const b = findBenefit(benefitId);
+  return b ? `<a class="post-policy m3-interactive" href="#/b/${esc(b.id)}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>${icon('description')}<span>${esc(b.title)}</span>${icon('chevron_right')}</a>` : '';
+};
+
 /** 댓글 쓰기 칸. 정책 카드와 글 보기 화면이 같이 쓴다 */
 export const talkForm = (id, label, placeholder) => `<form class="talk-form" id="${id}" novalidate>
   <md-outlined-text-field type="textarea" name="body" label="${label}" placeholder="${esc(placeholder)}" rows="3" maxlength="500" required no-asterisk error-text="내용을 써 주세요"></md-outlined-text-field>
@@ -70,7 +76,7 @@ export function bindPolicyTalk(panel, b, done) {
 
 /* ── 게시판 목록 ── */
 
-/** 글 한 줄: 사람 아이콘, 제목, 내용 한 줄(넘치면 말줄임), 오른쪽에 댓글 수 */
+/** 글 한 줄: 사람 아이콘, 제목, 내용 한 줄(넘치면 말줄임), 오른쪽에 댓글 수. 정책 글이면 맨 아래 정책 띠 */
 function postRow(p) {
   return `<li class="post-row">
     <a class="post-link m3-interactive" href="#/community/${esc(p.id)}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>
@@ -80,6 +86,7 @@ function postRow(p) {
         <span class="post-line"><span class="post-snippet">${esc(p.body.replace(/\s+/g, ' '))}</span><span class="post-count">댓글 ${p.comments.length}개</span></span>
       </span>
     </a>
+    ${p.benefitId ? policyStrip(p.benefitId) : ''}
   </li>`;
 }
 
