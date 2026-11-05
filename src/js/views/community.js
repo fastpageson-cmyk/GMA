@@ -11,13 +11,6 @@ let kind = 'all';
 const seedTag = (item) => (item.seed ? '<span class="seed-tag">시범 글</span>' : '');
 const postTitle = (p) => p.title || `‘${findBenefit(p.benefitId)?.title ?? '정책'}’에 남긴 댓글`;
 const paragraphs = (text) => esc(text).split('\n').map((line) => `<p>${line}</p>`).join('');
-const snippet = (text, n = 90) => (text.length > n ? `${text.slice(0, n)}…` : text);
-
-/** 정책으로 가는 작은 링크. 커뮤니티 글 어디서나 같은 모양 */
-const policyLink = (benefitId, hash = '') => {
-  const b = findBenefit(benefitId);
-  return b ? `<a class="policy-link m3-interactive" href="#/b/${esc(b.id)}${hash}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>${icon('description')}<span>${esc(b.title)}</span>${icon('chevron_right')}</a>` : '';
-};
 
 /** 댓글 쓰기 칸. 정책 카드와 글 보기 화면이 같이 쓴다 */
 export const talkForm = (id, label, placeholder) => `<form class="talk-form" id="${id}" novalidate>
@@ -77,16 +70,16 @@ export function bindPolicyTalk(panel, b, done) {
 
 /* ── 게시판 목록 ── */
 
+/** 글 한 줄: 사람 아이콘, 제목, 내용 한 줄(넘치면 말줄임), 오른쪽에 댓글 수 */
 function postRow(p) {
-  const kindLabel = p.benefitId && !p.title ? '정책 댓글' : p.benefitId ? '정책 이야기' : '자유글';
   return `<li class="post-row">
     <a class="post-link m3-interactive" href="#/community/${esc(p.id)}"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>
-      <p class="post-kind"><span class="kind-tag">${kindLabel}</span>${seedTag(p)}</p>
-      <h2 class="post-title">${esc(postTitle(p))}</h2>
-      <p class="post-snippet">${esc(snippet(p.body))}</p>
-      <p class="post-meta"><span>${esc(p.author)}</span><span>${timeAgo(p.createdAt)}</span><span>${icon('chat_bubble')}댓글 ${p.comments.length}</span></p>
+      <md-icon class="post-avatar" aria-hidden="true">account_circle</md-icon>
+      <span class="post-text">
+        <span class="post-title">${esc(postTitle(p))}</span>
+        <span class="post-line"><span class="post-snippet">${esc(p.body.replace(/\s+/g, ' '))}</span><span class="post-count">댓글 ${p.comments.length}개</span></span>
+      </span>
     </a>
-    ${p.benefitId ? policyLink(p.benefitId) : ''}
   </li>`;
 }
 
@@ -132,7 +125,7 @@ export function communityPost(root, { params }) {
     root.innerHTML = `
       <article class="narrow post">
         <a class="back-link m3-interactive" href="#/community"><md-ripple></md-ripple><md-focus-ring></md-focus-ring>${icon('arrow_back')}커뮤니티</a>
-        <p class="post-kind">${seedTag(p)}</p>
+        ${seedTag(p)}
         <h1 class="page-title" tabindex="-1">${esc(postTitle(p))}</h1>
         <p class="talk-meta"><b>${esc(p.author)}</b><span>${timeAgo(p.createdAt)}</span></p>
         <div class="post-body">${paragraphs(p.body)}</div>

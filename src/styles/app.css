@@ -121,7 +121,6 @@ body:has(.ask-input) .m3-snackbar { bottom: calc(var(--app-sticky-height) + var(
 .hero-title { font: var(--md-sys-typescale-display-medium); letter-spacing: var(--md-sys-typescale-display-medium-tracking); font-weight: var(--app-weight-strong); outline: none; }
 .hero-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--md-sys-measurement-space100) var(--md-sys-measurement-space200); margin-top: var(--md-sys-measurement-space300); }
 .hero-sub { color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-body-large); letter-spacing: var(--md-sys-typescale-body-large-tracking); }   /* 버튼 옆 설명 한 줄. 좁으면 버튼 아래로 */
-.hero-again { margin-top: var(--md-sys-measurement-space100); }
 .hero-search { width: 100%; max-width: var(--app-ask-max); margin-top: var(--md-sys-measurement-space400); text-align: start; }
 @media (max-width: 599px) { .hero-title { font: var(--md-sys-typescale-display-small); letter-spacing: var(--md-sys-typescale-display-small-tracking); font-weight: var(--app-weight-strong); } .hero { padding-top: var(--md-sys-measurement-space200); } .section { margin-top: var(--md-sys-measurement-space600); } }
 .need-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--md-sys-measurement-space150); }
@@ -358,31 +357,37 @@ body:has(.ask-input) .m3-snackbar { bottom: calc(var(--app-sticky-height) + var(
 
 /* ── 정책 카드 댓글 수 ── */
 .card-talk { display: inline-flex; align-items: center; gap: var(--md-sys-measurement-space50); margin-top: var(--md-sys-measurement-space100); color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-label-large); letter-spacing: var(--md-sys-typescale-label-large-tracking); }
-.card-talk md-icon, .post-meta md-icon { --md-icon-size: var(--app-icon-small); }
+.card-talk md-icon { --md-icon-size: var(--app-icon-small); }
 
 /* ── 커뮤니티 ── */
 .community { max-width: var(--app-ask-max); margin-inline: auto; }
 .community-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: var(--md-sys-measurement-space200); }
 .community-head .page-sub { margin-bottom: 0; }
 .kind-chips { margin-top: var(--md-sys-measurement-space300); }
-.post-list { margin-top: var(--md-sys-measurement-space200); display: flex; flex-direction: column; gap: var(--md-sys-measurement-space150); }
-.post-row { display: flex; flex-direction: column; border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--md-sys-shape-corner-medium); background: var(--md-sys-color-surface); overflow: hidden; }
-.post-link { position: relative; display: flex; flex-direction: column; gap: var(--md-sys-measurement-space50); padding: var(--md-sys-measurement-space200); color: inherit; text-decoration: none; --md-focus-ring-shape: var(--md-sys-shape-corner-medium); }
-.post-kind { display: flex; flex-wrap: wrap; gap: var(--md-sys-measurement-space100); }
-.post-kind:empty { display: none; }
-.kind-tag, .seed-tag { padding: 0 var(--md-sys-measurement-space100); border-radius: var(--md-sys-shape-corner-small); font: var(--md-sys-typescale-label-medium); letter-spacing: var(--md-sys-typescale-label-medium-tracking); }
-.kind-tag { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
 .seed-tag { background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); }
-.post-title { font: var(--md-sys-typescale-title-medium); letter-spacing: var(--md-sys-typescale-title-medium-tracking); font-weight: var(--app-weight-strong); }
-.post-snippet { color: var(--md-sys-color-on-surface-variant); }
-.post-meta, .talk-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--md-sys-measurement-space100) var(--md-sys-measurement-space150); color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-body-small); letter-spacing: var(--md-sys-typescale-body-small-tracking); }
-.post-meta span { display: inline-flex; align-items: center; gap: var(--md-sys-measurement-space25); }
+.talk-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--md-sys-measurement-space100) var(--md-sys-measurement-space150); color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-body-small); letter-spacing: var(--md-sys-typescale-body-small-tracking); }
 .talk-meta b { color: var(--md-sys-color-on-surface); font-weight: var(--app-weight-strong); }
-.policy-link, .talk-go { position: relative; display: flex; align-items: center; gap: var(--md-sys-measurement-space100); min-height: var(--md-sys-measurement-space600); padding-inline: var(--md-sys-measurement-space200); color: var(--md-sys-color-primary); text-decoration: none; font: var(--md-sys-typescale-label-large); letter-spacing: var(--md-sys-typescale-label-large-tracking); }
-.policy-link { border-top: 1px solid var(--md-sys-color-outline-variant); background: var(--md-sys-color-surface-container-low); }
-.policy-link span, .talk-go span { flex: 1; min-width: 0; }
-.policy-link md-icon, .talk-go md-icon { --md-icon-size: var(--app-icon-small); }
+.talk-go { position: relative; display: flex; align-items: center; gap: var(--md-sys-measurement-space100); min-height: var(--md-sys-measurement-space600); padding-inline: var(--md-sys-measurement-space200); color: var(--md-sys-color-primary); text-decoration: none; font: var(--md-sys-typescale-label-large); letter-spacing: var(--md-sys-typescale-label-large-tracking); }
 .talk-go { padding-inline: 0; align-self: flex-start; }
+.talk-go span { flex: 1; min-width: 0; }
+.talk-go md-icon { --md-icon-size: var(--app-icon-small); }
+.seed-tag { padding: 0 var(--md-sys-measurement-space100); border-radius: var(--md-sys-shape-corner-small); background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface-variant); font: var(--md-sys-typescale-label-medium); letter-spacing: var(--md-sys-typescale-label-medium-tracking); }
+.post .seed-tag { align-self: flex-start; }
+
+/* 글 목록: 한 장의 카드 안에 줄마다 구분선. 아이콘 | 제목 / 내용 한 줄 … 댓글 N개 */
+.post-list { margin-top: var(--md-sys-measurement-space200); border-radius: var(--md-sys-shape-corner-large); background: var(--md-sys-color-surface-container-lowest); box-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 3px 1px rgb(0 0 0 / 0.15);   /* M3 elevation level 1 */ overflow: hidden; }
+.post-row + .post-row { border-top: 1px solid var(--md-sys-color-outline-variant); }
+.post-link { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: var(--md-sys-measurement-space300); align-items: start; padding: var(--md-sys-measurement-space250) var(--md-sys-measurement-space300); color: inherit; text-decoration: none; --md-focus-ring-shape: 0; }
+.post-avatar { --md-icon-size: 32px; color: var(--md-sys-color-primary); font-variation-settings: 'FILL' 1; }
+.post-text { display: flex; flex-direction: column; gap: var(--md-sys-measurement-space75); min-width: 0; }
+.post-title { font: var(--md-sys-typescale-title-large); letter-spacing: var(--md-sys-typescale-title-large-tracking); font-weight: var(--app-weight-regular); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.post-line { display: flex; align-items: baseline; gap: var(--md-sys-measurement-space300); color: var(--md-sys-color-on-surface-variant); }
+.post-snippet { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: var(--md-sys-typescale-body-large); letter-spacing: var(--md-sys-typescale-body-large-tracking); }
+.post-count { flex: none; font: var(--md-sys-typescale-body-medium); letter-spacing: var(--md-sys-typescale-body-medium-tracking); color: var(--md-sys-color-on-surface); }
+@media (max-width: 599px) {
+  .post-link { column-gap: var(--md-sys-measurement-space150); padding: var(--md-sys-measurement-space200); }
+  .post-title { font: var(--md-sys-typescale-title-medium); letter-spacing: var(--md-sys-typescale-title-medium-tracking); white-space: normal; }
+}
 .community-note { margin-top: var(--md-sys-measurement-space300); }
 
 /* 글 보기·댓글 */

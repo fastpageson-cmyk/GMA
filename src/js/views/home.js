@@ -1,11 +1,8 @@
 // 홈: 큰 제목 → 30초 자격 체크 → 챗봇 질문 입력 → 필요한 것 고르기
 import { CATEGORIES } from '../data/lookups.js';
 import { esc, icon } from '../ui.js';
-import { getProfile } from '../store.js';
 
 export function home(root) {
-  const profile = getProfile();
-
   root.innerHTML = `
     <section class="hero">
       <h1 class="hero-title" tabindex="-1">장학부터 정부 지원까지<br>한번에</h1>
@@ -13,7 +10,6 @@ export function home(root) {
         <md-filled-button href="#/check">30초 자격 체크</md-filled-button>
         <p class="hero-sub">조건 고르고 내게 맞는 장학금, 정부 지원 찾기</p>
       </div>
-      ${profile ? '<md-text-button class="hero-again" href="#/list">내 혜택 다시 보기</md-text-button>' : ''}
       <form class="hero-search" role="search" id="home-ask">
         <div class="m3-search-bar">
           ${icon('help_center')}
