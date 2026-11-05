@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 const out = process.argv[2] ?? new URL('.', import.meta.url).pathname;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 const families = [
-  ['roboto', 'https://fonts.googleapis.com/css2?family=Roboto:wght@400..700&display=swap'],
+  ['google-sans', 'https://fonts.googleapis.com/css2?family=Google+Sans:wght@400..700&display=swap'],
   ['noto-sans-kr', 'https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400..700&display=swap'],
   ['material-symbols', 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block'],
 ];

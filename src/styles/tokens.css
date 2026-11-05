@@ -1,7 +1,7 @@
 /*
   google-design 토큰. 등급 [A] Material Web 2.5.0에 들어 있는 공식 토큰 v0.192(Google Material 3, Platform Web, Scheme Dynamic)를 Sass로 풀어 낸 값.
   기본 색은 기준 보라(#6750A4) 체계다. 브랜드 색으로 바꾸려면 scripts/make-theme.mjs로 색 블록만 새로 만든다.
-  예외 하나: 서체 목록 뒤의 "Noto Sans KR"은 m3 typography 문서(Roboto가 없는 글자는 Noto Sans로 대체)를 따른 것이다 [A-doc].
+  예외 둘: 서체는 Material 기본 Roboto 대신 팀이 고른 Google Sans를 쓴다 [D]. Google Sans에 없는 한글은 "Noto Sans KR"이 맡는다(m3 typography 문서의 Noto 대체 원칙) [A-doc].
   다시 만드는 법: scripts/dump-tokens.scss (references/sources.md 참고).
 */
 :root {
@@ -195,8 +195,8 @@
   --md-sys-state-focus-state-layer-opacity: 0.12;
   --md-sys-state-hover-state-layer-opacity: 0.08;
   --md-sys-state-pressed-state-layer-opacity: 0.12;
-  --md-ref-typeface-brand: Roboto, "Noto Sans KR", system-ui, sans-serif;
-  --md-ref-typeface-plain: Roboto, "Noto Sans KR", system-ui, sans-serif;
+  --md-ref-typeface-brand: "Google Sans", "Noto Sans KR", system-ui, sans-serif;
+  --md-ref-typeface-plain: "Google Sans", "Noto Sans KR", system-ui, sans-serif;
   --md-ref-typeface-weight-bold: 700;
   --md-ref-typeface-weight-medium: 500;
   --md-ref-typeface-weight-regular: 400;
