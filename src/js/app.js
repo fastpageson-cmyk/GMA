@@ -2,6 +2,7 @@
 import { alert } from './views/alert.js';
 import { ask } from './views/ask.js';
 import { check } from './views/check.js';
+import { community, communityPost, communityWrite } from './views/community.js';
 import { detail } from './views/detail.js';
 import { home } from './views/home.js';
 import { list } from './views/list.js';
@@ -20,6 +21,9 @@ const ROUTES = [
   { path: /^\/b\/([\w-]+)$/, view: detail, title: detailTitle, nav: 'find' },
   { path: /^\/ask$/, view: ask, title: '질문하기', nav: 'ask' },
   { path: /^\/alert$/, view: alert, title: '알림 받기', nav: 'alert' },
+  { path: /^\/community$/, view: community, title: '커뮤니티', nav: 'community' },
+  { path: /^\/community\/write$/, view: communityWrite, title: '글쓰기', nav: 'community' },
+  { path: /^\/community\/([\w-]+)$/, view: communityPost, title: '커뮤니티 글', nav: 'community' },
 ];
 
 function parseHash() {
@@ -42,7 +46,7 @@ function render() {
   lastPath = path;
 
   const title = typeof route.title === 'function' ? route.title(params) : route.title;
-  document.title = title === '닿음' ? '닿음 · 나도 받을 수 있는 지금 열린 혜택' : `${title} · 닿음`;
+  document.title = title === '닿음' ? '닿음 · 장학부터 정부 지원까지 한번에' : `${title} · 닿음`;
   document.querySelectorAll('[data-nav]').forEach((a) => {
     if (a.dataset.nav === route.nav) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');

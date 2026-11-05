@@ -3,8 +3,9 @@
 import { categoryLabel } from '../data/lookups.js';
 import { cardGrid, checkField, checkFields, closingSoon, deadlineText, EMAIL_PATTERN, esc, findBenefit, fmtDate, focusCentered, icon, profileFields, readFields, similarOpen, VERDICTS, wireFields } from '../ui.js';
 import { effectiveStatus, judge, missingFields, neededFields, STATUS_LABELS } from '../judge.js';
-import { addNextAlert, addReview, getAlert, getMyVote, getProfile, getReviews, getVotes, isSignedIn, saveProfile, signIn, vote } from '../store.js';
-import { hasPersonalNumber } from '../search.js';
+import { addNextAlert, getAlert, getMyVote, getProfile, getVotes, saveProfile, vote } from '../store.js';
+import { bindPolicyTalk, policyTalk } from './community.js';
+import { talkCount } from '../community.js';
 
 const REASONS = [
   { id: 'age', label: '나이 기준' },
@@ -14,7 +15,6 @@ const REASONS = [
   { id: 'other', label: '기타' },
 ];
 const ALTERNATIVES = '대신 받을 수 있는 혜택 보기';
-const REVIEW_RESULTS = { selected: '선정됨', rejected: '탈락', pending: '신청 중' };
 const CLOSED_REASON = { period: '신청 기간이 끝났어요.', budget: '예산이 모두 소진돼 일찍 끝났어요.', other: '모집이 끝났어요.' };
 
 const conditionList = (title, items, cls, iconName) => (items.length ? `<div class="cond-block"><p class="cond-title">${title}</p><ul class="cond-list ${cls}">${items.map((c) => `<li>${icon(iconName)}<span>${esc(c.label)}</span></li>`).join('')}</ul></div>` : '');
@@ -115,31 +115,6 @@ function infoPanel(b) {
     </section>`;
 }
 
-function reviewForm() {
-  if (!isSignedIn()) {
-    return `<div class="sign-in-box"><p class="info-title">후기 남기기</p><p>도배를 막으려고 글을 쓸 때만 간편 로그인을 받아요. 읽기는 로그인 없이 돼요.</p>
-      <div class="button-row"><md-outlined-button data-sign-in>카카오로 계속</md-outlined-button><md-outlined-button data-sign-in>네이버로 계속</md-outlined-button></div></div>`;
-  }
-  return `<form class="review-form" id="review-form" novalidate><p class="info-title">후기 남기기</p>
-    <md-chip-set class="single-chips" data-name="result" role="group" aria-label="결과">
-      ${Object.entries(REVIEW_RESULTS).map(([v, l]) => `<md-filter-chip label="${l}" data-value="${v}"></md-filter-chip>`).join('')}
-    </md-chip-set>
-    <p class="field-error" role="alert" hidden>선정됨, 탈락, 신청 중 가운데 하나를 골라 주세요</p>
-    <md-outlined-text-field name="text" label="한 줄 후기" no-asterisk supporting-text="학점·소득 같은 개인 숫자는 빼 주세요" maxlength="100" required error-text="한 줄만 써 주세요"></md-outlined-text-field>
-    <div class="button-row"><md-filled-tonal-button type="submit">올리기</md-filled-tonal-button></div>
-  </form>`;
-}
-
-function reviewPanel(b) {
-  const reviews = getReviews(b.id);
-  return `
-    <p class="notice-line">${icon('info')}후기는 참고용이에요. 조건은 공식 정보를 기준으로 봐 주세요.</p>
-    ${reviewForm()}
-    ${reviews.length
-      ? `<ul class="review-list">${reviews.map((r) => `<li class="review"><p class="review-head"><span class="review-tag">참고용</span><b>${REVIEW_RESULTS[r.result]}</b><span class="hint">${esc(r.date)}</span></p><p>${esc(r.text)}</p><md-text-button data-report>신고</md-text-button></li>`).join('')}</ul>`
-      : '<p class="empty">아직 후기가 없어요. 첫 후기를 남겨 주세요.</p>'}`;
-}
-
 function reasonPanel(b) {
   const votes = getVotes(b.id);
   const mine = getMyVote(b.id);
@@ -236,7 +211,7 @@ export function detail(root, { params, query }) {
     return;
   }
 
-  let tab = { info: 0, review: 1, reason: 2 }[query.tab] ?? 0;
+  let tab = { info: 0, talk: 1, reason: 2 }[query.tab] ?? 0;
   let editing = false;
 
   const paint = () => {
@@ -278,10 +253,10 @@ export function detail(root, { params, query }) {
           </dl>
           <md-tabs id="tabs" aria-label="혜택 정보" active-tab-index="${tab}">
             <md-primary-tab>정보</md-primary-tab>
-            <md-primary-tab>후기</md-primary-tab>
+            <md-primary-tab>댓글 ${talkCount(b.id)}</md-primary-tab>
             <md-primary-tab>못 받는 이유</md-primary-tab>
           </md-tabs>
-          <div class="tab-panel" role="tabpanel" id="panel">${[infoPanel, reviewPanel, reasonPanel][tab](b)}</div>
+          <div class="tab-panel" role="tabpanel" id="panel">${[infoPanel, policyTalk, reasonPanel][tab](b)}</div>
         </div>
       </div>`;
 
@@ -293,7 +268,7 @@ export function detail(root, { params, query }) {
     tab = index;
     const tabs = root.querySelector('#tabs');
     tabs.activeTabIndex = index;
-    root.querySelector('#panel').innerHTML = [infoPanel, reviewPanel, reasonPanel][index](b);
+    root.querySelector('#panel').innerHTML = [infoPanel, policyTalk, reasonPanel][index](b);
     wireFields(root.querySelector('#panel'));
     bindPanel();
     if (scroll) tabs.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -301,33 +276,10 @@ export function detail(root, { params, query }) {
 
   const bindPanel = () => {
     const panel = root.querySelector('#panel');
-    panel.querySelectorAll('[data-sign-in]').forEach((btn) => btn.addEventListener('click', () => {
-      signIn();
-      window.M3.showSnackbar('시제품이라 실제 로그인 없이 넘어갔어요');
+    bindPolicyTalk(panel, b, () => {
       showTab(1);
-    }));
-    panel.querySelector('#review-form')?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const field = form.querySelector('md-outlined-text-field');
-      const chip = [...form.querySelectorAll('md-filter-chip')].find((c) => c.selected);
-      field.value = field.value.trim();
-      field.errorText = '한 줄만 써 주세요';
-      const textOk = checkField(field);
-      form.querySelector('.field-error').hidden = Boolean(chip);
-      if (!chip) return focusCentered(form.querySelector('md-filter-chip'));
-      if (!textOk) return focusCentered(field);
-      if (hasPersonalNumber(field.value)) {
-        field.errorText = '학점·소득 같은 숫자는 빼 주세요';
-        field.error = true;
-        return focusCentered(field);
-      }
-      addReview(b.id, { result: chip.dataset.value, text: field.value, date: fmtDate(new Date().toISOString().slice(0, 10)) });
-      showTab(1);
-      window.M3.showSnackbar('후기를 올렸어요');
-      return undefined;
+      root.querySelector('#tabs').children[1].textContent = `댓글 ${talkCount(b.id)}`;
     });
-    panel.querySelectorAll('[data-report]').forEach((btn) => btn.addEventListener('click', () => window.M3.showSnackbar('신고를 받았어요')));
     panel.querySelectorAll('[data-reason]').forEach((btn) => btn.addEventListener('click', () => {
       vote(b.id, btn.dataset.reason);
       showTab(2);

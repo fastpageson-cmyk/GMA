@@ -11,9 +11,9 @@ export function home(root) {
       <h1 class="hero-title" tabindex="-1">장학부터 정부 지원까지<br>한번에</h1>
       <div class="hero-actions">
         <md-filled-button href="#/check">30초 자격 체크</md-filled-button>
-        ${profile ? '<md-outlined-button href="#/list">내 혜택 다시 보기</md-outlined-button>' : ''}
+        <p class="hero-sub">조건 고르고 내게 맞는 장학금, 정부 지원 찾기</p>
       </div>
-      <p class="hero-sub">조건 고르고 내게 맞는 장학금, 정부 지원 찾기</p>
+      ${profile ? '<md-text-button class="hero-again" href="#/list">내 혜택 다시 보기</md-text-button>' : ''}
       <form class="hero-search" role="search" id="home-ask">
         <div class="m3-search-bar">
           ${icon('help_center')}

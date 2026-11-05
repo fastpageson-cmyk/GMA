@@ -6,7 +6,9 @@ import { SUPPORT_TYPES } from '../src/js/data/lookups.js';
 import { daysLeft, effectiveStatus, INCOME_BANDS, judge, missingFields, neededFields, onlyDirectLeft } from '../src/js/judge.js';
 import { changedSlots, directHits, hasPersonalNumber, heardAnything, parseSentence, searchBenefits, turnProfile } from '../src/js/search.js';
 import { addNextAlert, getAlert, getProfile, saveAlert, saveProfile } from '../src/js/store.js';
-import { benefitCard, closingSoon, EMAIL_PATTERN, fold, openBenefits, rankBenefits, similarOpen, verdictTag } from '../src/js/ui.js';
+import { benefitCard, closingSoon, EMAIL_PATTERN, fold, openBenefits, rankBenefits, similarOpen } from '../src/js/ui.js';
+import { addComment, addPost, allPosts, getPost, talkCount } from '../src/js/community.js';
+import { SEED_POSTS } from '../src/js/data/community-seed.js';
 import { answerLead, recommend } from '../src/js/views/ask.js';
 import { results } from '../src/js/views/list.js';
 
@@ -326,14 +328,34 @@ test('예전 소득 구간이 저장돼 있으면 비워서 다시 고르게 한
   assert.equal(getProfile().birthYear, 2002);
 });
 
-test('카드는 남은 확인 수를 판정 상자에 합치고 조건 문장을 싣지 않는다', () => {
+test('카드는 판정 상자 없이 댓글 수를 보여 주고 조건 문장을 싣지 않는다', () => {
   const b = { id: 'x', title: '시범', sourceName: '용인시', amount: { text: '10만 원' }, period: { always: true }, eligibility: { regions: ['경기도'], other: ['가', '나'] } };
   const html = benefitCard(b, { sido: '경기도' });
-  assert.match(html, /확인 필요 · 2가지/);
+  assert.doesNotMatch(html, /class="verdict|확인 필요/);
   assert.doesNotMatch(html, /남음|예: /);
-  assert.equal(verdictTag('eligible').includes('가지'), false);
-  // 아직 판정 전이면 상자가 없다
-  assert.doesNotMatch(benefitCard(b, null), /class="verdict/);
+  assert.match(html, /댓글 0/);
+});
+
+test('정책 카드 댓글은 커뮤니티 글이 되고, 서로 연결된다', () => {
+  const data = new Map();
+  globalThis.localStorage = { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) };
+  const before = talkCount('gg-basic-income');
+  assert.ok(before > 0, '시범 글이 정책 카드에 붙어 있다');
+  const post = addPost({ body: '지역화폐 어디서 써요?', benefitId: 'gg-basic-income', author: '' });
+  assert.equal(post.author, '익명');
+  // 커뮤니티 전체 목록 맨 앞(가장 최근)에 정책이 연결된 채로 올라간다
+  assert.equal(allPosts()[0].id, post.id);
+  assert.equal(allPosts()[0].benefitId, 'gg-basic-income');
+  assert.equal(talkCount('gg-basic-income'), before + 1);
+  // 커뮤니티에서 단 댓글도 정책 카드의 댓글 수에 더해진다
+  addComment(post.id, { body: '편의점에서 돼요', author: '수지' });
+  assert.equal(getPost(post.id).comments.length, 1);
+  assert.equal(talkCount('gg-basic-income'), before + 2);
+  assert.match(benefitCard(BENEFITS.find((b) => b.id === 'gg-basic-income'), null), new RegExp(`댓글 ${before + 2}`));
+});
+
+test('시범 글이 연결한 정책은 모두 실제 혜택이다', () => {
+  for (const p of SEED_POSTS.filter((x) => x.benefitId)) assert.ok(BENEFITS.some((b) => b.id === p.benefitId), p.id);
 });
 
 test('곧 마감은 마감일이 있는 열린 혜택을 빠른 순으로 준다', () => {
@@ -353,9 +375,10 @@ test('목록 머리는 같은 숫자를 반복하지 않는다', () => {
   const p = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', schoolId: 'hufs', income: 'p50' };
   const html = results(p);
   assert.doesNotMatch(html, /count-row/);
-  // 첫 묶음 제목은 페이지 제목과 같은 말이라 화면에서 숨긴다
+  // 목록 제목은 페이지 제목과 같은 말이라 화면에서 숨기고, 판정 묶음 제목은 따로 두지 않는다
   assert.match(html.match(/<h2[^>]*>/)[0], /visually-hidden/);
-  assert.match(html, /대상 아님 \d+개/);
+  assert.doesNotMatch(html, /더 확인해야 해요|직접 확인만 남았어요|class="verdict[ "]/);
+  assert.match(html, /조건이 안 맞는 혜택 \d+개/);
 });
 
 const heard = (q, saved = null) => {

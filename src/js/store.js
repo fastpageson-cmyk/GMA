@@ -58,6 +58,20 @@ export function vote(id, reason) {
   write({ votes: { ...votes, [id]: counts }, myVotes: { ...myVotes, [id]: reason } });
 }
 
+// 커뮤니티: 내가 쓴 글과, 글마다 내가 단 댓글. 시범 글은 data/community-seed.js에 있다
+const community = () => ({ posts: [], comments: {}, ...read().community });
+export const getCommunity = () => community();
+export function savePost(post) {
+  const c = community();
+  write({ community: { ...c, posts: [post, ...c.posts] } });
+}
+export function saveComment(postId, comment) {
+  const c = community();
+  write({ community: { ...c, comments: { ...c.comments, [postId]: [...(c.comments[postId] ?? []), comment] } } });
+}
+export const getNickname = () => read().nickname ?? '';
+export const saveNickname = (nickname) => write({ nickname });
+
 export const isSignedIn = () => Boolean(read().signedIn);
 export const signIn = () => write({ signedIn: true });
 

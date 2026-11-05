@@ -2,6 +2,7 @@
 import { BENEFITS } from './data/benefits.js';
 import { CATEGORIES, SCHOOLS, schoolLabel } from './data/lookups.js';
 import { REGIONS, SIDO_LIST } from './data/regions.js';
+import { talkCount } from './community.js';
 import { daysLeft, effectiveStatus, INCOME_BANDS, judge, onlyDirectLeft, STATUS_LABELS } from './judge.js';
 
 export const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -16,12 +17,6 @@ export const VERDICTS = {
   no: { label: '대상이 아니에요', short: '대상 아님', icon: 'block' },
 };
 
-/** 판정 3단계는 색만이 아니라 모양으로도 구분한다: 채운 상자, 점선 테두리, 회색. left는 남은 확인 수 */
-export const verdictTag = (verdict, left = 0) => {
-  const v = VERDICTS[verdict];
-  return v ? `<span class="verdict ${verdict}">${icon(v.icon)}${v.short}${left ? ` · ${left}가지` : ''}</span>` : '';
-};
-
 export function deadlineText(benefit) {
   const { status } = effectiveStatus(benefit);
   if (status === 'closed') return '마감';
@@ -32,7 +27,7 @@ export function deadlineText(benefit) {
   return left === 0 ? '오늘 마감' : `D-${left}`;
 }
 
-/** 카드 한 줄: 온라인·서류 N개, 대상이 아니면 막은 조건. 남은 확인 수는 판정 상자가 맡고 조건 문장은 상세에서 본다 */
+/** 카드 한 줄: 온라인·서류 N개, 대상이 아니면 막은 조건. 조건 문장은 상세에서 본다 */
 function cardLine(benefit, result) {
   if (result.verdict === 'no' && result.failed[0]) return `안 맞는 조건: ${result.failed[0].label}`;
   const method = { online: '온라인', visit: '방문', both: '온라인·방문' }[benefit.apply?.method];
@@ -50,7 +45,7 @@ export function benefitCard(benefit, profile, reason) {
     <p class="card-amount">${esc(benefit.amount.text)}</p>
     <h3 class="card-title">${esc(benefit.title)}</h3>
     <p class="card-line">${esc(line)}</p>
-    ${verdictTag(result.verdict, result.verdict === 'check' ? result.unknown.length : 0)}
+    <p class="card-talk">${icon('chat_bubble')}댓글 ${talkCount(benefit.id)}</p>
   </a>`;
 }
 

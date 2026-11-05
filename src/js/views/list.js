@@ -2,8 +2,8 @@
 // 걸러보기(지원 형태·분야·모집 중·정렬)는 제목 바로 아래 가로 띠에 칩으로 둔다.
 import { BENEFITS } from '../data/benefits.js';
 import { CATEGORIES, categoryLabel, SUPPORT_TYPES, supportLabel } from '../data/lookups.js';
-import { benefitCard, cardGrid, esc, fold, icon, profileSummary, rankBenefits } from '../ui.js';
-import { daysLeft, effectiveStatus, judge, onlyDirectLeft } from '../judge.js';
+import { benefitCard, cardGrid, esc, fold, profileSummary, rankBenefits } from '../ui.js';
+import { daysLeft, effectiveStatus, judge } from '../judge.js';
 import { getProfile } from '../store.js';
 
 // 상세에 다녀올 때만 걸러보기를 이어 간다. 다른 길로 들어오면 전체 목록에서 시작한다
@@ -56,50 +56,33 @@ function clearSuggestion(profile) {
 
 /** 목록 제목. 걸러보기 띠 위에 따로 그린다 */
 export function resultHeading(profile) {
-  const all = BENEFITS.filter(matches);
-  const open = all.filter((b) => effectiveStatus(b).status === 'open');
-  const count = (v) => open.filter((b) => judge(b, profile).verdict === v);
+  const open = BENEFITS.filter(matches).filter((b) => effectiveStatus(b).status === 'open');
   const scope = activeFilters().length ? `${activeFilters().map(([, , label]) => label).join('·')} ` : '';
   if (!profile) return `지금 열린 ${scope}혜택 ${open.length}개`;
-  const eligible = count('eligible').length;
-  if (eligible) return `지금 받을 수 있는 ${scope}혜택 ${eligible}개`;
-  const direct = count('check').filter((b) => onlyDirectLeft(judge(b, profile))).length;
-  if (direct) return `입력한 조건이 맞는 ${scope}혜택 ${direct}개`;
-  return `지금 확인해 볼 ${scope}혜택 ${count('check').length}개`;
+  return `내 조건에 맞는 ${scope}혜택 ${open.filter((b) => judge(b, profile).verdict !== 'no').length}개`;
 }
 
+/** 열린 혜택은 한 목록으로 보여 준다. 받을 수 있는 것이 앞에 오고, 대상 아님·곧 열림·마감은 접어 둔다 */
 export function results(profile) {
   const all = BENEFITS.filter(matches);
   const by = (status) => all.filter((b) => effectiveStatus(b).status === status);
   const open = by('open');
-  const verdicts = (v) => open.filter((b) => judge(b, profile).verdict === v);
-  // 묶음 안에서는 고른 정렬을 따르고, 값이 같으면 남은 확인이 적은 것이 앞선다
-  const order = (items) => rankBenefits(items, profile).sort(SORTS[filters.sort]);
-  const eligible = order(verdicts('eligible'));
-  const check = verdicts('check');
-  const direct = order(check.filter((b) => onlyDirectLeft(judge(b, profile))));
-  const others = order(check.filter((b) => !onlyDirectLeft(judge(b, profile))));
-  const no = verdicts('no');
+  const fits = open.filter((b) => judge(b, profile).verdict !== 'no');
+  const no = open.filter((b) => judge(b, profile).verdict === 'no');
   const upcoming = by('upcoming');
   const closed = by('closed');
+  // 고른 정렬을 따르고, 값이 같으면 조건이 더 확실한 것이 앞선다
+  const order = (items) => rankBenefits(items, profile).sort(SORTS[filters.sort]);
 
   const folded = upcoming.length || no.length || closed.length;
   const empty = `<div class="empty-card"><p class="empty-title">이 조건으로는 지금 열린 혜택이 없어요.</p>
     <p>${clearSuggestion(profile)}${folded ? ' 아래 접어 둔 혜택도 살펴보세요.' : ''}</p>
     <md-outlined-button id="reset-filters">걸러보기 지우기</md-outlined-button></div>`;
 
-  // 첫 묶음은 페이지 제목과 같은 말이라 눈에는 숨기고 제목 구조만 남긴다
-  const groups = [['받을 수 있어요', eligible], ['조건이 맞아요. 직접 확인만 남았어요', direct], ['더 확인해야 해요', others]].filter(([, items]) => items.length);
-  const group = ([title, items], i) => `<section class="verdict-group"><h2 class="${i ? 'section-title' : 'visually-hidden'}">${title} ${items.length}개</h2>${cardGrid(items, profile)}</section>`;
-  const shown = profile
-    ? groups.map(group).join('')
-    : open.length ? `<section class="verdict-group"><h2 class="visually-hidden">지금 열린 혜택</h2>${cardGrid(order(open), null)}</section>` : '';
-
   return `
-    ${shown || empty}
-    ${profile ? `<p class="notice-line">${icon('info')}판정은 입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>` : ''}
+    ${fits.length ? `<section class="verdict-group"><h2 class="visually-hidden">혜택 목록</h2>${cardGrid(order(fits), profile)}</section>` : empty}
     ${fold(`곧 열리는 혜택 ${upcoming.length}개`, upcoming.length && cardGrid(upcoming, profile), !filters.openOnly)}
-    ${fold(`대상 아님 ${no.length}개 · 못 받는 이유 남기기`, no.length && `<div class="card-grid">${no.map((b) => benefitCard(b, profile)).join('')}</div>`, !filters.openOnly)}
+    ${fold(`조건이 안 맞는 혜택 ${no.length}개`, no.length && `<div class="card-grid">${no.map((b) => benefitCard(b, profile)).join('')}</div>`, !filters.openOnly)}
     ${fold(`마감된 혜택 ${closed.length}개`, closed.length && cardGrid(closed, profile), !filters.openOnly)}`;
 }
 
