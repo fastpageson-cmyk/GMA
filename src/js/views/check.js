@@ -1,4 +1,4 @@
-// 자격 체크: 몇 가지만 고르면 맞춤 혜택 목록으로 간다.
+// 자격 체크(내 조건 선택): 몇 가지만 고르면 맞춤 혜택 목록으로 간다.
 import { checkFields, profileFields, readFields, wireFields } from '../ui.js';
 import { clearProfile, getProfile, saveProfile } from '../store.js';
 
@@ -6,8 +6,7 @@ export function check(root) {
   const profile = getProfile();
   root.innerHTML = `
     <div class="narrow">
-      <h1 class="page-title" tabindex="-1">몇 가지만 골라 주세요</h1>
-      <p class="page-sub">입력한 내용은 이 브라우저에만 남고 서버로 보내지 않아요. 로그인도 없어요.</p>
+      <h1 class="page-title" tabindex="-1">내 조건 선택</h1>
       <form id="check-form" class="stack" novalidate>
         ${profileFields(['birthYear', 'region', 'status', 'school', 'income'], profile)}
         <div class="sticky-cta">

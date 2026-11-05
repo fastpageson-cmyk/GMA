@@ -1,12 +1,26 @@
 // 자격 판정. handoff/20_데이터_명세.md 3장 규칙을 그대로 옮긴 순수 함수.
 // 원칙: 애매하면 무조건 '확인 필요'. 틀리게 '받을 수 있음'을 띄우는 게 가장 나쁜 실패다.
 
-// 가구 소득 구간. 값은 기준 중위소득 %. 구간 하나로 답이 갈리면 '확인 필요'로 둔다.
+// 2026년 기준 중위소득(월, 보건복지부 고시). 구간 옆에 실제 금액을 보여 줄 때 쓴다.
+export const MEDIAN_INCOME_2026 = { 1: 2564238, 4: 6494738 };
+const manwon = (won) => `${Math.round(won / 10000).toLocaleString('ko-KR')}만 원`;
+const band = (min, max) => ({
+  label: `중위소득 ${max}% 이하 (1인 월 ${manwon(MEDIAN_INCOME_2026[1] * max / 100)} · 4인 월 ${manwon(MEDIAN_INCOME_2026[4] * max / 100)})`,
+  short: `중위소득 ${max}% 이하`,
+  min,
+  max,
+});
+
+// 가구 소득 구간. 값은 기준 중위소득 %. 경계는 시범 데이터의 소득 기준(50·100·150·200·300%)에 맞춰
+// 구간 하나로 답이 갈리지 않게 했다. 구간이 기준에 걸치면 '확인 필요'로 둔다.
 export const INCOME_BANDS = {
-  low: { label: '낮은 편 (기준 중위소득 60% 이하)', min: 0, max: 60 },
-  mid: { label: '중간쯤 (기준 중위소득 60~150%)', min: 60, max: 150 },
-  high: { label: '높은 편 (기준 중위소득 150% 넘음)', min: 150, max: Infinity },
-  unknown: { label: '소득 모름' },
+  p50: band(0, 50),
+  p100: band(50, 100),
+  p150: band(100, 150),
+  p200: band(150, 200),
+  p300: band(200, 300),
+  over300: { label: `중위소득 300% 넘음 (1인 월 ${manwon(MEDIAN_INCOME_2026[1] * 3)} · 4인 월 ${manwon(MEDIAN_INCOME_2026[4] * 3)} 넘음)`, short: '중위소득 300% 넘음', min: 300, max: Infinity },
+  unknown: { label: '소득 모름', short: '소득 모름' },
 };
 
 export const STATUS_LABELS = { student: '대학생', jobseeker: '구직 중', employed: '일하는 중', other: '그 밖에' };

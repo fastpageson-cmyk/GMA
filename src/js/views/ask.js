@@ -65,7 +65,7 @@ function understoodChips(turn, index) {
     ${chip('region', '사는 곳', [p.sido, p.sigungu].filter(Boolean).join(' ') || undefined)}
     ${chip('birthYear', '나이', p.birthYear ? `${p.birthYear}년생` : undefined)}
     ${chip('status', '상태', STATUS_LABELS[p.status])}
-    ${chip('income', '소득', p.income === 'unknown' ? undefined : INCOME_BANDS[p.income]?.label)}
+    ${chip('income', '소득', p.income === 'unknown' ? undefined : INCOME_BANDS[p.income]?.short)}
     ${chip('interest', '관심 분야', interests || undefined)}
   </md-chip-set>`;
 }

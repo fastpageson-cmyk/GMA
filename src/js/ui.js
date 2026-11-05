@@ -67,7 +67,7 @@ export function profileSummary(p) {
     [p.sido, p.sigungu].filter(Boolean).join(' '),
     STATUS_LABELS[p.status],
     p.schoolId && schoolLabel(p.schoolId),
-    INCOME_BANDS[p.income]?.label,
+    INCOME_BANDS[p.income]?.short,
   ].filter(Boolean);
   return parts.map((t, i) => `<span class="summary-part">${esc(t)}${i < parts.length - 1 ? ' ·' : ''}</span>`).join(' ');
 }
@@ -111,6 +111,9 @@ const incomeField = (p) => `<p class="hint">우리 집 소득이 전국 가구�
   ${Object.entries(INCOME_BANDS).map(([v, band]) => radioRow('income', v, v === 'unknown' ? '모르겠어요' : band.label, (p.income ?? 'unknown') === v)).join('')}
 </div>`;
 
+/** 제목 옆 작은 물음표. 마우스를 올리거나 눌러 포커스가 가면 설명이 뜬다 (M3 plain tooltip 모양) */
+export const helpTip = (text) => `<span class="help-tip" tabindex="0" role="button" aria-label="${esc(text)}">${icon('help')}<span class="tip" role="tooltip" aria-hidden="true">${esc(text)}</span></span>`;
+
 const FIELD_HTML = { birthYear: birthYearField, region: regionField, status: statusField, income: incomeField };
 const FIELD_TITLES = { birthYear: '태어난 해', region: '사는 곳', status: '지금 상태', school: '학교', income: '가구 소득' };
 
@@ -121,7 +124,8 @@ export function profileFields(fields, profile, { schoolAlways = false } = {}) {
     const body = f === 'school' ? schoolField(p, schoolAlways) : FIELD_HTML[f](p);
     const hint = f === 'school' ? '<span class="hint">대학생일 때만</span>' : '';
     if (f === 'school' && !schoolAlways) return `<div class="field-group" data-group="school"${p.status === 'student' ? '' : ' hidden'}><p class="field-title">${FIELD_TITLES[f]} ${hint}</p>${body.replace(' hidden', '')}</div>`;
-    return `<div class="field-group"><p class="field-title">${FIELD_TITLES[f]}</p>${body}</div>`;
+    const help = f === 'income' ? helpTip('입력한 내용은 이 브라우저에만 남고 서버로 보내지 않아요.') : '';
+    return `<div class="field-group"><p class="field-title">${FIELD_TITLES[f]}${help}</p>${body}</div>`;
   }).join('');
 }
 

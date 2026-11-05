@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { BENEFITS } from '../src/js/data/benefits.js';
+import { SUPPORT_TYPES } from '../src/js/data/lookups.js';
 import { daysLeft, effectiveStatus, INCOME_BANDS, judge, missingFields, neededFields, onlyDirectLeft } from '../src/js/judge.js';
 import { changedSlots, directHits, hasPersonalNumber, heardAnything, parseSentence, searchBenefits, turnProfile } from '../src/js/search.js';
 import { addNextAlert, getAlert, getProfile, saveAlert, saveProfile } from '../src/js/store.js';
@@ -10,7 +11,7 @@ import { answerLead, recommend } from '../src/js/views/ask.js';
 import { results } from '../src/js/views/list.js';
 
 const base = { eligibility: { birthYearMin: 1992, birthYearMax: 2007, regions: ['경기도 용인시'], statuses: ['student', 'jobseeker'] } };
-const me = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', income: 'low' };
+const me = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', income: 'p50' };
 
 test('모든 조건이 확인되고 맞으면 받을 수 있음', () => {
   assert.equal(judge(base, me).verdict, 'eligible');
@@ -49,9 +50,13 @@ test('소득을 모르면 소득 기준 있는 혜택은 확인 필요', () => {
 
 test('소득 구간이 기준에 걸치면 확인 필요, 구간이 확실하면 판정', () => {
   const b = { eligibility: { incomeMaxPercent: 100 } };
-  assert.equal(judge(b, { income: 'low' }).verdict, 'eligible');
-  assert.equal(judge(b, { income: 'mid' }).verdict, 'check');
-  assert.equal(judge(b, { income: 'high' }).verdict, 'no');
+  assert.equal(judge(b, { income: 'p50' }).verdict, 'eligible');
+  assert.equal(judge(b, { income: 'p100' }).verdict, 'eligible');
+  assert.equal(judge(b, { income: 'p150' }).verdict, 'no');
+  // 데이터 기준이 구간 경계와 다르면(180%) 걸친 구간은 확인 필요
+  const c = { eligibility: { incomeMaxPercent: 180 } };
+  assert.equal(judge(c, { income: 'p200' }).verdict, 'check');
+  assert.equal(judge(c, { income: 'p150' }).verdict, 'eligible');
 });
 
 test('시·도만 알고 시·군·구 요건이면 확인 필요', () => {
@@ -175,7 +180,7 @@ test('정렬: 받을 수 있음 → 직접 확인만 남음(적은 순) → 그 
 });
 
 test('시범 데이터: 조건을 다 입력한 대학생에게 직접 확인만 남은 혜택이 앞에 온다', () => {
-  const p = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', schoolId: 'hufs', income: 'low' };
+  const p = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', schoolId: 'hufs', income: 'p50' };
   const ranked = rankBenefits(BENEFITS.filter((b) => judge(b, p).verdict === 'check'), p);
   const flags = ranked.map((b) => onlyDirectLeft(judge(b, p)));
   assert.ok(flags.includes(true));
@@ -221,7 +226,7 @@ test('비어 있는 칸만 다시 묻는다', () => {
 test('이미 답한 칸은 판정이 확인 필요여도 다시 묻지 않는다', () => {
   const b = { eligibility: { statuses: ['student'], incomeMaxPercent: 100 } };
   assert.deepEqual(missingFields(b, { status: 'other', income: 'unknown' }), []);
-  assert.deepEqual(missingFields(b, { status: 'student', income: 'mid' }), []);
+  assert.deepEqual(missingFields(b, { status: 'student', income: 'p150' }), []);
 });
 
 test('다섯 조건이 있어도 네 칸을 채우면 남은 칸을 묻는다', () => {
@@ -300,8 +305,25 @@ test('시범 데이터: 용인 혜택의 대안에 용인을 제외한 사업을
   assert.ok(ids.includes('national-learning-card'));
 });
 
-test('소득 구간은 쉬운 말이 앞에 온다', () => {
-  for (const key of ['low', 'mid', 'high']) assert.match(INCOME_BANDS[key].label, /^(낮은 편|중간쯤|높은 편) \(기준 중위소득/);
+test('소득 구간은 중위소득 %와 실제 금액(1인·4인 월)을 함께 보여 준다', () => {
+  for (const key of ['p50', 'p100', 'p150', 'p200', 'p300']) {
+    assert.match(INCOME_BANDS[key].label, /^중위소득 \d+% 이하 \(1인 월 [\d,]+만 원 · 4인 월 [\d,]+만 원\)$/);
+    assert.match(INCOME_BANDS[key].short, /^중위소득 \d+% 이하$/);
+  }
+  assert.match(INCOME_BANDS.p100.label, /1인 월 256만 원 · 4인 월 649만 원/);
+});
+
+test('목록 걸러보기의 지원 형태는 모든 혜택에 붙어 있다', () => {
+  const ids = new Set(SUPPORT_TYPES.map((t) => t.id));
+  for (const b of BENEFITS) assert.ok(ids.has(b.support), b.id);
+});
+
+test('예전 소득 구간이 저장돼 있으면 비워서 다시 고르게 한다', () => {
+  const data = new Map();
+  globalThis.localStorage = { getItem: (k) => data.get(k) ?? null, setItem: (k, v) => data.set(k, v) };
+  saveProfile({ birthYear: 2002, income: 'low' });
+  assert.equal(getProfile().income, undefined);
+  assert.equal(getProfile().birthYear, 2002);
 });
 
 test('카드는 남은 확인 수를 판정 상자에 합치고 조건 문장을 싣지 않는다', () => {
@@ -328,7 +350,7 @@ test('접힌 묶음은 내용이 없으면 그리지 않고, open이면 펼쳐 �
 });
 
 test('목록 머리는 같은 숫자를 반복하지 않는다', () => {
-  const p = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', schoolId: 'hufs', income: 'low' };
+  const p = { birthYear: 2002, sido: '경기도', sigungu: '용인시', status: 'student', schoolId: 'hufs', income: 'p50' };
   const html = results(p);
   assert.doesNotMatch(html, /count-row/);
   // 첫 묶음 제목은 페이지 제목과 같은 말이라 화면에서 숨긴다

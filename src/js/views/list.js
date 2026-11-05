@@ -1,12 +1,13 @@
 // 맞춤 혜택 목록: 정부 정책과 학교 장학을 한 목록에. 모집 중이 기본, 대상 아님·마감은 접어 둔다.
+// 걸러보기(지원 형태·분야·모집 중·정렬)는 제목 바로 아래 가로 띠에 칩으로 둔다.
 import { BENEFITS } from '../data/benefits.js';
-import { CATEGORIES, categoryLabel, SOURCES } from '../data/lookups.js';
+import { CATEGORIES, categoryLabel, SUPPORT_TYPES, supportLabel } from '../data/lookups.js';
 import { benefitCard, cardGrid, esc, fold, icon, profileSummary, rankBenefits } from '../ui.js';
 import { daysLeft, effectiveStatus, judge, onlyDirectLeft } from '../judge.js';
 import { getProfile } from '../store.js';
 
 // 상세에 다녀올 때만 걸러보기를 이어 간다. 다른 길로 들어오면 전체 목록에서 시작한다
-const filters = { openOnly: true, sources: new Set(), cats: new Set(), sort: 'deadline' };
+const filters = { openOnly: true, types: new Set(), cats: new Set(), sort: 'deadline' };
 
 const amountOf = (b) => b.amount?.maxWon ?? 0;
 const SORTS = {
@@ -14,38 +15,29 @@ const SORTS = {
   amount: (a, b) => amountOf(b) - amountOf(a),
 };
 
-function filterPanel() {
-  const check = (group, id, label, on) => `<label class="check-row"><md-checkbox touch-target="wrapper" data-group="${group}" value="${id}"${on ? ' checked' : ''}></md-checkbox><span>${esc(label)}</span></label>`;
+const SORT_LABELS = { deadline: '마감 빠른 순', amount: '금액 큰 순' };
+
+/** 가로 걸러보기 띠. 줄마다 이름표 하나와 칩 여러 개 */
+function filterBar() {
+  const chip = (group, id, label, on) => `<md-filter-chip label="${esc(label)}" data-group="${group}" data-id="${id}"${on ? ' selected' : ''}></md-filter-chip>`;
+  const row = (title, chips) => `<div class="filter-row"><p class="filter-name">${title}</p><md-chip-set aria-label="${title}">${chips}</md-chip-set></div>`;
   return `
-    <div class="m3-setting-row compact-row">
-      <div class="text"><p class="title">모집 중만</p></div>
-      <md-switch data-filter="openOnly"${filters.openOnly ? ' selected' : ''} aria-label="모집 중만"></md-switch>
-    </div>
-    <fieldset class="filter-group"><legend>어디서 주는지</legend>${SOURCES.map((s) => check('sources', s.id, s.label, filters.sources.has(s.id))).join('')}</fieldset>
-    <fieldset class="filter-group"><legend>분야</legend>${CATEGORIES.map((c) => check('cats', c.id, c.label, filters.cats.has(c.id))).join('')}</fieldset>
-    <fieldset class="filter-group"><legend>정렬</legend>
-      <label class="radio-row"><md-radio name="sort" value="deadline" touch-target="wrapper"${filters.sort === 'deadline' ? ' checked' : ''}></md-radio><span>마감 빠른 순</span></label>
-      <label class="radio-row"><md-radio name="sort" value="amount" touch-target="wrapper"${filters.sort === 'amount' ? ' checked' : ''}></md-radio><span>금액 큰 순</span></label>
-    </fieldset>`;
+    ${row('지원 형태', SUPPORT_TYPES.map((t) => chip('types', t.id, t.label, filters.types.has(t.id))).join(''))}
+    ${row('분야', CATEGORIES.map((c) => chip('cats', c.id, c.label, filters.cats.has(c.id))).join(''))}
+    <div class="filter-row">
+      <p class="filter-name">정렬</p>
+      <md-chip-set aria-label="정렬">${Object.entries(SORT_LABELS).map(([id, label]) => chip('sort', id, label, filters.sort === id)).join('')}</md-chip-set>
+      <label class="open-only"><span>모집 중만</span><md-switch data-filter="openOnly"${filters.openOnly ? ' selected' : ''} aria-label="모집 중만"></md-switch></label>
+    </div>`;
 }
 
 function matches(b) {
-  if (filters.sources.size && !filters.sources.has(b.source)) return false;
+  if (filters.types.size && !filters.types.has(b.support)) return false;
   if (filters.cats.size && !filters.cats.has(b.category)) return false;
   return true;
 }
 
-const sourceLabel = (id) => SOURCES.find((s) => s.id === id)?.label ?? id;
-const activeFilters = () => [...[...filters.sources].map((id) => ['sources', id, sourceLabel(id)]), ...[...filters.cats].map((id) => ['cats', id, categoryLabel(id)])];
-
-/** 켜진 걸러보기는 결과 위에 칩으로 보여 준다. 칩을 누르면 지워진다 */
-function filterChips() {
-  const active = activeFilters();
-  if (!active.length) return '';
-  return `<md-chip-set class="active-filters" aria-label="켜진 걸러보기">
-    ${active.map(([group, id, label]) => `<md-input-chip remove-only label="${esc(label)}" aria-label-remove="${esc(label)} 걸러보기 지우기" data-group="${group}" data-id="${id}"></md-input-chip>`).join('')}
-  </md-chip-set>`;
-}
+const activeFilters = () => [...[...filters.types].map((id) => ['types', id, supportLabel(id)]), ...[...filters.cats].map((id) => ['cats', id, categoryLabel(id)])];
 
 /** 목록에 카드로 나오는 수. 대상 아님은 접혀 있어 세지 않는다 */
 const shownCount = (profile) => BENEFITS.filter(matches)
@@ -62,6 +54,20 @@ function clearSuggestion(profile) {
   return best?.count ? `‘${best.label}’ 걸러보기를 지우면 ${best.count}개가 나와요.` : '걸러보기를 줄여 보세요.';
 }
 
+/** 목록 제목. 걸러보기 띠 위에 따로 그린다 */
+export function resultHeading(profile) {
+  const all = BENEFITS.filter(matches);
+  const open = all.filter((b) => effectiveStatus(b).status === 'open');
+  const count = (v) => open.filter((b) => judge(b, profile).verdict === v);
+  const scope = activeFilters().length ? `${activeFilters().map(([, , label]) => label).join('·')} ` : '';
+  if (!profile) return `지금 열린 ${scope}혜택 ${open.length}개`;
+  const eligible = count('eligible').length;
+  if (eligible) return `지금 받을 수 있는 ${scope}혜택 ${eligible}개`;
+  const direct = count('check').filter((b) => onlyDirectLeft(judge(b, profile))).length;
+  if (direct) return `입력한 조건이 맞는 ${scope}혜택 ${direct}개`;
+  return `지금 확인해 볼 ${scope}혜택 ${count('check').length}개`;
+}
+
 export function results(profile) {
   const all = BENEFITS.filter(matches);
   const by = (status) => all.filter((b) => effectiveStatus(b).status === status);
@@ -76,14 +82,6 @@ export function results(profile) {
   const no = verdicts('no');
   const upcoming = by('upcoming');
   const closed = by('closed');
-  const scope = activeFilters().length ? `${activeFilters().map(([, , label]) => label).join('·')} ` : '';
-
-  let heading = `지금 열린 ${scope}혜택 ${open.length}개`;
-  if (profile) {
-    if (eligible.length) heading = `지금 받을 수 있는 ${scope}혜택 ${eligible.length}개`;
-    else if (direct.length) heading = `입력한 조건이 맞는 ${scope}혜택 ${direct.length}개`;
-    else heading = `지금 확인해 볼 ${scope}혜택 ${check.length}개`;
-  }
 
   const folded = upcoming.length || no.length || closed.length;
   const empty = `<div class="empty-card"><p class="empty-title">이 조건으로는 지금 열린 혜택이 없어요.</p>
@@ -98,9 +96,6 @@ export function results(profile) {
     : open.length ? `<section class="verdict-group"><h2 class="visually-hidden">지금 열린 혜택</h2>${cardGrid(order(open), null)}</section>` : '';
 
   return `
-    <h1 class="page-title" tabindex="-1">${heading}</h1>
-    ${profile && !eligible.length && direct.length ? '<p class="result-sub">상세에서 직접 확인을 마치면 받을 수 있음으로 바뀌어요.</p>' : ''}
-    ${filterChips()}
     ${shown || empty}
     ${profile ? `<p class="notice-line">${icon('info')}판정은 입력한 조건으로 본 결과예요. 공고 기준으로 다시 확인하세요.</p>` : ''}
     ${fold(`곧 열리는 혜택 ${upcoming.length}개`, upcoming.length && cardGrid(upcoming, profile), !filters.openOnly)}
@@ -111,68 +106,52 @@ export function results(profile) {
 export function list(root, { query, from }) {
   const profile = getProfile();
   if (query.all || !from?.startsWith('/b/')) {
-    filters.sources.clear();
+    filters.types.clear();
     filters.cats.clear();
     if (query.cat) filters.cats.add(query.cat);
   }
 
-  const filterButton = `<md-outlined-button class="filter-open" data-open="#filter-sheet">${icon('filter_list', 'icon')}<span id="filter-label">걸러보기</span></md-outlined-button>`;
   root.innerHTML = `
     ${profile
-      ? `<div class="condition-bar"><p class="condition-text"><span class="label">내 조건</span> ${profileSummary(profile)}</p><md-text-button href="#/check">수정</md-text-button>${filterButton}</div>`
-      : `<div class="condition-bar invite"><p class="condition-text">조건을 고르면 내가 받을 수 있는 혜택만 골라 드려요.</p><md-filled-tonal-button href="#/check">30초 자격 체크</md-filled-tonal-button>${filterButton}</div>`}
-    <div class="list-layout">
-      <aside class="filter-side" aria-label="걸러보기">${filterPanel()}</aside>
-      <div id="results"></div>
-    </div>
-    <dialog class="m3-sheet bottom" id="filter-sheet" aria-label="걸러보기">
-      <span class="handle"></span>
-      <div class="sheet-body">${filterPanel()}</div>
-      <div class="sheet-actions"><md-filled-button data-close id="sheet-result">결과 보기</md-filled-button></div>
-    </dialog>`;
+      ? `<div class="condition-bar"><p class="condition-text"><span class="label">내 조건</span> ${profileSummary(profile)}</p><md-text-button href="#/check">수정</md-text-button></div>`
+      : `<div class="condition-bar invite"><p class="condition-text">조건을 고르면 내가 받을 수 있는 혜택만 골라 드려요.</p><md-filled-tonal-button href="#/check">30초 자격 체크</md-filled-tonal-button></div>`}
+    <h1 class="page-title list-title" tabindex="-1" id="list-title"></h1>
+    <div class="filter-bar" aria-label="걸러보기">${filterBar()}</div>
+    <div id="results"></div>`;
 
   const area = root.querySelector('#results');
-  const syncPanels = (except) => root.querySelectorAll('.filter-side, .sheet-body').forEach((p) => {
-    if (!except || !p.contains(except)) p.innerHTML = filterPanel();
-  });
+  const bar = root.querySelector('.filter-bar');
   const clearAddress = () => history.replaceState(null, '', '#/list');
   const paint = () => {
+    root.querySelector('#list-title').textContent = resultHeading(profile);
     area.innerHTML = results(profile);
-    const on = activeFilters().length;
-    root.querySelector('#filter-label').textContent = on ? `걸러보기 ${on}` : '걸러보기';
-    root.querySelector('#sheet-result').textContent = `결과 ${shownCount(profile)}개 보기`;
     area.querySelector('#reset-filters')?.addEventListener('click', () => {
-      filters.sources.clear();
+      filters.types.clear();
       filters.cats.clear();
       clearAddress();
-      syncPanels();
+      bar.innerHTML = filterBar();
       paint();
-    });
-    // md-input-chip의 remove는 거품이 올라오지 않고 × 칸(34)에서만 난다. 칩 전체를 누름 영역으로 쓴다
-    area.querySelectorAll('md-input-chip').forEach((chip) => {
-      const removeChip = (e) => {
-        e.preventDefault();
-        filters[chip.dataset.group].delete(chip.dataset.id);
-        clearAddress();
-        syncPanels();
-        paint();
-      };
-      chip.addEventListener('remove', removeChip);
-      chip.addEventListener('click', removeChip);
     });
   };
 
-  // 넓은 화면의 왼쪽 칸과 좁은 화면의 시트가 같은 걸러보기를 쓴다
-  root.addEventListener('change', (e) => {
-    const t = e.target;
-    if (t.matches('[data-filter="openOnly"]')) filters.openOnly = t.selected;
-    else if (t.matches('md-checkbox[data-group]')) {
-      const set = filters[t.dataset.group];
-      if (t.checked) set.add(t.value); else set.delete(t.value);
-    } else if (t.matches('md-radio[name="sort"]')) filters.sort = t.value;
-    else return;
+  // 칩은 누를 때마다 선택이 바뀐다. 정렬은 하나만 고르는 칩이라 늘 하나가 켜져 있게 다시 그린다
+  bar.addEventListener('click', (e) => {
+    const chip = e.target.closest('md-filter-chip[data-group]');
+    if (!chip) return;
+    const { group, id } = chip.dataset;
+    if (group === 'sort') {
+      filters.sort = id;
+      bar.querySelectorAll('md-filter-chip[data-group="sort"]').forEach((c) => { c.selected = c.dataset.id === id; });
+    } else {
+      if (chip.selected) filters[group].add(id); else filters[group].delete(id);
+      clearAddress();
+    }
     paint();
-    syncPanels(t);
+  });
+  bar.addEventListener('change', (e) => {
+    if (!e.target.matches('[data-filter="openOnly"]')) return;
+    filters.openOnly = e.target.selected;
+    paint();
   });
   paint();
 }

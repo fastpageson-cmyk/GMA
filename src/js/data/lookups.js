@@ -11,6 +11,16 @@ export const CATEGORIES = [
 ];
 export const categoryLabel = (id) => CATEGORIES.find((c) => c.id === id)?.label ?? id;
 
+// 지원 형태. 목록 걸러보기에서 분야와 같이 쓴다
+export const SUPPORT_TYPES = [
+  { id: 'cash', label: '현금 지원' },
+  { id: 'education', label: '교육·연수' },
+  { id: 'voucher', label: '포인트·바우처' },
+  { id: 'savings', label: '저축·금리' },
+  { id: 'service', label: '물품·공간·할인' },
+];
+export const supportLabel = (id) => SUPPORT_TYPES.find((s) => s.id === id)?.label ?? id;
+
 export const SOURCES = [
   { id: 'national', label: '정부' },
   { id: 'province', label: '도' },

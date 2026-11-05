@@ -1,5 +1,7 @@
 // 브라우저 저장소. 자격 체크 입력은 서버로 보내지 않는다 (20_데이터_명세.md 6장).
 // 후기·투표·알림은 실제 서버가 붙기 전까지 이 브라우저에만 남는 시제품 저장이다.
+import { INCOME_BANDS } from './judge.js';
+
 const KEY = 'daeum.v1';
 
 function read() {
@@ -25,7 +27,10 @@ const hasValue = (profile) => Object.values(profile ?? {}).some((v) => v !== und
 
 export function getProfile() {
   const { profile } = read();
-  return hasValue(profile) ? profile : null;
+  if (!hasValue(profile)) return null;
+  // 예전 소득 구간(낮은 편·중간쯤·높은 편)은 새 구간과 경계가 달라 옮길 수 없다. 다시 고르게 비운다
+  if (profile.income && !INCOME_BANDS[profile.income]) return { ...profile, income: undefined };
+  return profile;
 }
 
 export function saveProfile(patch) {
